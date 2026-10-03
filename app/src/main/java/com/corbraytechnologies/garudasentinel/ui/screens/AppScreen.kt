@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.first
 import com.corbraytechnologies.garudasentinel.data.AppMetadataEntity
 import com.corbraytechnologies.garudasentinel.ui.MainViewModel
 import com.corbraytechnologies.garudasentinel.ui.components.EmptyStateMessage
@@ -131,7 +133,13 @@ fun AppScreen(main: MainViewModel, onBack: () -> Unit, focusPackage: String? = n
                 }
             }
             item {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val sortScroll = rememberScrollState()
+                // Opened sorted by access from a finding: "Most access" is the last chip and starts
+                // off screen, so scroll the row to show which sort is on.
+                LaunchedEffect(Unit) {
+                    if (sortByAccess) sortScroll.scrollTo(snapshotFlow { sortScroll.maxValue }.first { it > 0 })
+                }
+                Row(Modifier.horizontalScroll(sortScroll), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AppSort.entries.forEach { FilterChip(selected = sort == it, onClick = { sort = it }, label = { Text(it.label) }) }
                 }
             }
