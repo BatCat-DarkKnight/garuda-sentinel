@@ -21,6 +21,7 @@ import com.corbraytechnologies.garudasentinel.data.MediaMetadataEntity
 import com.corbraytechnologies.garudasentinel.data.ScanLogEntity
 import com.corbraytechnologies.garudasentinel.data.StorageMode
 import com.corbraytechnologies.garudasentinel.export.ExportCategory
+import com.corbraytechnologies.garudasentinel.export.ExportDefaults
 import com.corbraytechnologies.garudasentinel.findings.FindingRules
 import com.corbraytechnologies.garudasentinel.findings.Report
 import com.corbraytechnologies.garudasentinel.findings.ReportInput
@@ -215,8 +216,20 @@ class DeviceViewModel(private val c: AppContainer) : ViewModel() {
     fun clearLocations() = viewModelScope.launch { c.db.locationDao().clear() }
 }
 
+/** Past checks, listed from Controls. */
 class HistoryViewModel(private val c: AppContainer) : ViewModel() {
     val logs: StateFlow<List<ScanLogEntity>> = c.db.scanLogDao().observeAll().stateIn(this, emptyList())
+
+    fun deleteLog(id: Long) = viewModelScope.launch { c.db.scanLogDao().delete(id) }
+}
+
+/** The Controls tab: export, how results are kept, screen privacy and Delete all. */
+class ControlsViewModel(private val c: AppContainer) : ViewModel() {
+    val savedChecks: StateFlow<Int> = c.db.scanLogDao().observeAll().map { it.size }.stateIn(this, 0)
+    val locationReadings: StateFlow<Int> = c.db.locationDao().observeAll().map { it.size }.stateIn(this, 0)
+
+    /** Folder the user granted for file scanning, as a tree URI. */
+    val treeUri: StateFlow<String?> = c.settings.filesTreeUri.stateIn(this, null)
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
@@ -224,10 +237,12 @@ class HistoryViewModel(private val c: AppContainer) : ViewModel() {
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
-    val selection = MutableStateFlow(ExportCategory.entries.filter { it.onByDefault }.toSet())
+    val selection = MutableStateFlow(ExportDefaults.categories)
 
     /** Photo GPS is left out of exports unless the user opts in. */
-    val includePhotoLocations = MutableStateFlow(false)
+    val includePhotoLocations = MutableStateFlow(ExportDefaults.INCLUDE_PHOTO_LOCATIONS)
+
+    val format = MutableStateFlow(ExportDefaults.format)
 
     /** True when this process keeps scan results in memory only. */
     val memoryOnly: Boolean = c.memoryOnly
@@ -251,8 +266,6 @@ class HistoryViewModel(private val c: AppContainer) : ViewModel() {
         }
         _busy.value = false
     }
-
-    fun deleteLog(id: Long) = viewModelScope.launch { c.db.scanLogDao().delete(id) }
 
     /**
      * Turns "Forget results when I close the app" on or off. Current results are deleted either way (on disk

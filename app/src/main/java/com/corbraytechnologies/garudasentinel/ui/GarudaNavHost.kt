@@ -41,6 +41,7 @@ import com.corbraytechnologies.garudasentinel.ui.components.HairlineDivider
 import com.corbraytechnologies.garudasentinel.ui.components.TabIcons
 import com.corbraytechnologies.garudasentinel.ui.screens.AboutScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.AppScreen
+import com.corbraytechnologies.garudasentinel.ui.screens.ControlsScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.DeviceScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.EulaScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.ExploreScreen
@@ -133,7 +134,7 @@ private fun MainTabs(main: MainViewModel) {
         ) {
             composable(Tab.REPORT.route) { ReportScreen(main, onNavigate = go, onRoute = goRoute) }
             composable(Tab.EXPLORE.route) { ExploreScreen(main, onNavigate = go) }
-            composable(Tab.CONTROLS.route) { HistoryScreen(onBack = null) }
+            composable(Tab.CONTROLS.route) { ControlsScreen(onNavigate = go) }
             composable(Tab.HELP.route) { HelpScreen(onNavigate = go) }
 
             composable(
