@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 
 // DRAFT license and privacy text. Have it reviewed before public release.
 private val EULA_TEXT = """
-Effective date: 2026-09-21
+Effective date: 2026-10-03
 
 This End User License Agreement is between you and Corbray Technologies and covers your use of the Garuda Sentinel Android app ("the App").
 
