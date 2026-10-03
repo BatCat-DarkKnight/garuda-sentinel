@@ -32,6 +32,7 @@ import android.view.accessibility.AccessibilityManager
 import com.corbraytechnologies.garudasentinel.data.AppMetadataEntity
 import com.corbraytechnologies.garudasentinel.model.WatcherApp
 import com.corbraytechnologies.garudasentinel.model.WatcherSignals
+import com.corbraytechnologies.garudasentinel.utils.InstallSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.KeyStore
@@ -112,8 +113,8 @@ class WatcherCollector(private val context: Context) {
         }
         val hidden = apps.filter { !it.isSystemApp && it.packageName !in launcherPackages }.map { ref(it.packageName) }
 
-        val sideloaded = apps.filter { !it.isSystemApp && isOutsideAStore(it.installer) }
-            .map { ref(it.packageName, detail = installerDetail(it.installer)) }
+        val sideloaded = apps.filter { !it.isSystemApp && !isFromStore(pm, it, byPackage) }
+            .map { ref(it.packageName, detail = InstallSource.label(it.installer) { pkg -> byPackage[pkg]?.appName }) }
 
         val certificates = runCatching {
             val store = KeyStore.getInstance("AndroidCAStore").apply { load(null) }
@@ -149,16 +150,16 @@ class WatcherCollector(private val context: Context) {
         )
     }
 
-    private fun isOutsideAStore(installer: String?): Boolean = when (installer) {
-        null -> true
-        "com.android.vending", "com.sec.android.app.samsungapps", "com.amazon.venezia", "com.huawei.appmarket" -> false
-        else -> true
-    }
-
-    private fun installerDetail(installer: String?): String = when (installer) {
-        null -> "Installed from a file, or came with the phone"
-        "com.google.android.packageinstaller", "com.android.packageinstaller" -> "Installed from a file"
-        else -> "Installed by $installer"
+    /**
+     * Applies [InstallSource.isFromStore]. The installer's own installer comes from the scan; the
+     * signing comparison asks the package manager whether both apps have the same certificate.
+     */
+    private fun isFromStore(pm: PackageManager, app: AppMetadataEntity, byPackage: Map<String, AppMetadataEntity>): Boolean {
+        val installer = app.installer
+        val installerOfInstaller = installer?.let { byPackage[it]?.installer }
+        val sameSigner = installer != null && installerOfInstaller in InstallSource.STORES &&
+            runCatching { pm.checkSignatures(app.packageName, installer) == PackageManager.SIGNATURE_MATCH }.getOrDefault(false)
+        return InstallSource.isFromStore(installer, installerOfInstaller, sameSigner)
     }
 
     private fun commonName(subject: String?): String? =

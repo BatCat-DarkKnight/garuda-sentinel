@@ -90,6 +90,8 @@ Report is always at the bottom of the back stack: back from any other tab root r
 | Low | USB debugging on | Opens developer options |
 | Low | Any other "worth knowing" watcher (apps with no icon, apps from outside a store, developer options) | Opens the matching Android setting, or App info when one app is involved |
 
+An app counts as installed from a store when a known store (Google Play, Galaxy Store, Amazon Appstore, Huawei AppGallery) installed it, or when its installer itself came from a known store and is signed with the same certificate, as with an earbuds plugin installed by its manager app. Anything else counts as outside a store (`InstallSource`, `InstallSourceTest`).
+
 Findings are ranked high, then medium, then low, and by the newest app update or photo date within a severity. Apps are named when there are three or fewer. Garuda Sentinel itself is left out of the app-based rules. Every "all clear" watcher counts as passed, except "Not checked on this phone". A check that could not run (no photo access, no photo location access, or settings Android would not let the app read) is shown as a neutral row instead of being hidden.
 
 ## Scan flow

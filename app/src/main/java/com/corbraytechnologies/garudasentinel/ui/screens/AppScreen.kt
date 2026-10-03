@@ -74,6 +74,7 @@ import com.corbraytechnologies.garudasentinel.ui.components.KeyValueRow
 import com.corbraytechnologies.garudasentinel.ui.components.SectionCard
 import com.corbraytechnologies.garudasentinel.permissions.Permissions
 import com.corbraytechnologies.garudasentinel.utils.AppLists
+import com.corbraytechnologies.garudasentinel.utils.InstallSource
 import com.corbraytechnologies.garudasentinel.utils.SensitivePermissions
 import com.corbraytechnologies.garudasentinel.utils.countOf
 import com.corbraytechnologies.garudasentinel.utils.formatDate
@@ -97,6 +98,8 @@ fun AppScreen(main: MainViewModel, onBack: () -> Unit, focusPackage: String? = n
     var query by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
     var focused by rememberSaveable { mutableStateOf(false) }
+    // Installer packages are shown by their app name when that app is installed.
+    val appNames = remember(apps) { apps.associate { it.packageName to it.appName } }
     val shown = remember(apps, filter, sort, query) {
         when (filter) {
             AppFilter.USER -> AppLists.userInstalled(apps, ownPackage)
@@ -162,7 +165,9 @@ fun AppScreen(main: MainViewModel, onBack: () -> Unit, focusPackage: String? = n
                 }
             }
             item { Text(countOf(shown.size, "app"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            items(shown, key = { it.packageName }) { AppCard(it, startExpanded = it.packageName == focusPackage) }
+            items(shown, key = { it.packageName }) {
+                AppCard(it, installedBy = InstallSource.label(it.installer, appNames::get), startExpanded = it.packageName == focusPackage)
+            }
             item { Spacer(Modifier.height(16.dp)) }
         }
     }
@@ -188,7 +193,7 @@ private fun AppSummary(apps: List<AppMetadataEntity>) {
 }
 
 @Composable
-private fun AppCard(app: AppMetadataEntity, startExpanded: Boolean = false) {
+private fun AppCard(app: AppMetadataEntity, installedBy: String, startExpanded: Boolean = false) {
     var expanded by rememberSaveable(app.packageName) { mutableStateOf(startExpanded) }
     val context = LocalContext.current
     val permissions = remember(app) {
@@ -217,6 +222,7 @@ private fun AppCard(app: AppMetadataEntity, startExpanded: Boolean = false) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Text(installedBy, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (granted.isNotEmpty()) {
                         Text(
                             "Allowed: " + granted.joinToString { it.label },
@@ -232,7 +238,7 @@ private fun AppCard(app: AppMetadataEntity, startExpanded: Boolean = false) {
                 KeyValueRow("Package", app.packageName)
                 KeyValueRow("Installed", formatDate(app.firstInstallTime))
                 KeyValueRow("Last updated", formatDate(app.lastUpdateTime))
-                KeyValueRow("Installed by", installerLabel(app.installer))
+                KeyValueRow("Installer package", app.installer ?: "None recorded")
                 KeyValueRow("Targets Android API", app.targetSdkVersion.toString())
                 KeyValueRow("Permissions asked", app.permissionList.size.toString())
                 if (granted.isNotEmpty()) {
@@ -259,14 +265,6 @@ private fun AppCard(app: AppMetadataEntity, startExpanded: Boolean = false) {
     }
 }
 
-private fun installerLabel(installer: String?): String = when (installer) {
-    null -> "Unknown or preinstalled"
-    "com.android.vending" -> "Google Play Store"
-    "com.sec.android.app.samsungapps" -> "Galaxy Store"
-    "com.amazon.venezia" -> "Amazon Appstore"
-    "com.google.android.packageinstaller", "com.android.packageinstaller" -> "Installed from a file (sideloaded)"
-    else -> installer
-}
 
 @Composable
 private fun AppIcon(packageName: String) {
