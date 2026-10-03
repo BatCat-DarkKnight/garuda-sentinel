@@ -53,13 +53,21 @@ class WatcherRulesTest {
     }
 
     @Test
-    fun `notification access, device admins and added certificates need attention`() {
+    fun `notification access from outside a store, device admins and added certificates need attention`() {
         val signals = WatcherSignals(
+            installedFromOutsideAStore = listOf(app("com.example.watch")),
             notificationListeners = listOf(app("com.example.watch")),
             deviceAdmins = listOf(app("com.example.admin")),
             userCaCertificates = listOf(app("user:1")),
         )
         assertEquals(3, WatcherRules.attentionCount(signals))
+    }
+
+    @Test
+    fun `notification access from a store app is worth knowing, not attention`() {
+        val signals = WatcherSignals(notificationListeners = listOf(app("com.example.buds")))
+        assertEquals(0, WatcherRules.attentionCount(signals))
+        assertEquals(listOf("Store apps that can read your notifications"), titles(signals, WatcherLevel.CHECK))
     }
 
     @Test

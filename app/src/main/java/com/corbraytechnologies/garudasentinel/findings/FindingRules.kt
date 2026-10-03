@@ -162,10 +162,25 @@ object FindingRules {
             )
         }
 
-        // LOW: every other "worth knowing" watcher. Background location and USB debugging are covered above.
+        // MEDIUM: notification access held by apps from a store, including same-signer companions.
+        watchers.filter { it.kind == WatcherKind.NOTIFICATIONS_FROM_STORE }.forEach { watcher ->
+            val apps = watcher.apps.filter(::isUserApp)
+            if (apps.isEmpty()) return@forEach
+            val n = apps.size
+            findings += Finding(
+                severity = FindingSeverity.MEDIUM,
+                title = if (n == 1) "1 app from a store can read your notifications" else "$n apps from a store can read your notifications",
+                sentence = holdersSentence(apps.map { it.appName }, "notification access"),
+                action = FindingAction.OpenSetting(SettingsTarget.NOTIFICATION_ACCESS),
+                recency = recencyOf(apps.map { it.packageName }),
+            )
+        }
+
+        // LOW: every other "worth knowing" watcher. Background location, store notification access and
+        // USB debugging are covered above.
         watchers.filter { it.level == WatcherLevel.CHECK }.forEach { watcher ->
             when (watcher.kind) {
-                WatcherKind.BACKGROUND_LOCATION -> return@forEach
+                WatcherKind.BACKGROUND_LOCATION, WatcherKind.NOTIFICATIONS_FROM_STORE -> return@forEach
                 WatcherKind.DEVELOPER -> if (input.signals.usbDebuggingEnabled) return@forEach
                 else -> Unit
             }
@@ -202,7 +217,7 @@ object FindingRules {
     /** The settings screen behind a watcher, or null when there is none to open. */
     fun settingsTarget(kind: WatcherKind): SettingsTarget? = when (kind) {
         WatcherKind.ACCESSIBILITY, WatcherKind.SYSTEM_ACCESSIBILITY -> SettingsTarget.ACCESSIBILITY
-        WatcherKind.NOTIFICATIONS -> SettingsTarget.NOTIFICATION_ACCESS
+        WatcherKind.NOTIFICATIONS, WatcherKind.NOTIFICATIONS_FROM_STORE -> SettingsTarget.NOTIFICATION_ACCESS
         WatcherKind.DEVICE_ADMIN, WatcherKind.CERTIFICATES, WatcherKind.NO_SCREEN_LOCK, WatcherKind.SCREEN_LOCK_ON -> SettingsTarget.SECURITY
         WatcherKind.BACKGROUND_LOCATION -> SettingsTarget.LOCATION
         WatcherKind.HIDDEN_APPS, WatcherKind.SIDELOADED -> SettingsTarget.ALL_APPS

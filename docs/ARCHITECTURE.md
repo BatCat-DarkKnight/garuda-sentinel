@@ -83,7 +83,8 @@ Report is always at the bottom of the back stack: back from any other tab root r
 | Severity | Rule | Action |
 |---|---|---|
 | High | An app the user installed from outside a store holds notification access, an accessibility service or device admin | Opens the app's row in Apps |
-| High | Any other "needs attention" watcher (accessibility, notification access or device admin from a store app, a certificate added by hand, no screen lock) | Opens the matching Android setting |
+| High | Any other "needs attention" watcher (accessibility or device admin from a store app, a certificate added by hand, no screen lock) | Opens the matching Android setting |
+| Medium | Notification access held by an app from a store, including a same-signer companion of a store app (listed under Worth knowing on Who can watch) | Opens notification access settings |
 | Medium | Photos with GPS coordinates | Opens Photos and media filtered to located photos |
 | Medium | Apps the user installed with microphone, camera or precise location granted (one finding each) | Opens Apps sorted by most access |
 | Medium | Background location granted to an app the user installed | Opens Apps sorted by most access |

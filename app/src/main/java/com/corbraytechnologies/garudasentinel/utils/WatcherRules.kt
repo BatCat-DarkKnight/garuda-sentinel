@@ -56,16 +56,34 @@ object WatcherRules {
                 )
             )
         }
-        val listeners = signals.notificationListeners.filterNot { it.isSystemApp }
+        // Notification access needs attention when the app came from outside a store. From a store
+        // (including a same-signer companion of a store app) it is worth knowing: watches, earbuds
+        // and car apps need it.
+        val outsideAStore = signals.installedFromOutsideAStore.map { it.packageName }.toSet()
+        val (listeners, storeListeners) = signals.notificationListeners
+            .filterNot { it.isSystemApp }
+            .partition { it.packageName in outsideAStore }
         if (listeners.isNotEmpty()) {
             add(
                 WatcherFinding(
                     WatcherLevel.ATTENTION,
                     "Apps that can read your notifications",
-                    "These apps see every notification, including message previews and one-time codes. " +
-                        "Smart watches and car apps normally need this.",
+                    "These apps see every notification, including message previews and one-time codes, and " +
+                        "did not come from an app store.",
                     listeners,
                     WatcherKind.NOTIFICATIONS,
+                )
+            )
+        }
+        if (storeListeners.isNotEmpty()) {
+            add(
+                WatcherFinding(
+                    WatcherLevel.CHECK,
+                    "Store apps that can read your notifications",
+                    "These apps see every notification, including message previews and one-time codes. " +
+                        "Smart watches, earbuds and car apps normally need this.",
+                    storeListeners,
+                    WatcherKind.NOTIFICATIONS_FROM_STORE,
                 )
             )
         }

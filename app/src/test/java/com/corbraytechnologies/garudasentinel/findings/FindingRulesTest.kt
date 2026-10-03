@@ -128,14 +128,35 @@ class FindingRulesTest {
     // HIGH: other attention watchers
 
     @Test
-    fun `a store app with notification access uses the watcher title and opens the setting`() {
-        val watch = app("com.example.watch", "Watch")
+    fun `a store app with notification access is medium and opens the setting`() {
+        val watch = app("com.example.watch", "Watch", updated = 12)
         val finding = build(apps = listOf(watch), signals = WatcherSignals(notificationListeners = listOf(ref(watch)))).findings.single()
-        assertEquals(FindingSeverity.HIGH, finding.severity)
-        assertEquals("Apps that can read your notifications", finding.title)
-        assertEquals("Watch can see every notification, including message previews and codes.", finding.sentence)
+        assertEquals(FindingSeverity.MEDIUM, finding.severity)
+        assertEquals("1 app from a store can read your notifications", finding.title)
+        assertEquals("Watch has notification access right now.", finding.sentence)
         assertEquals(FindingAction.OpenSetting(SettingsTarget.NOTIFICATION_ACCESS), finding.action)
         assertEquals("Open Android setting", finding.action.label)
+        assertEquals(12L, finding.recency)
+    }
+
+    @Test
+    fun `a same-signer companion counts as a store app, so its notification access is medium`() {
+        // The collector leaves a same-signer companion of a store app out of installedFromOutsideAStore.
+        val buds = app("com.samsung.accessory.zenithmgr", "Galaxy Buds2 Pro")
+        val report = build(apps = listOf(buds), signals = WatcherSignals(notificationListeners = listOf(ref(buds))))
+        assertEquals(listOf(FindingSeverity.MEDIUM), report.findings.map { it.severity })
+        assertEquals("Galaxy Buds2 Pro has notification access right now.", report.findings.single().sentence)
+    }
+
+    @Test
+    fun `notification access is high for an app from outside a store and medium for store apps`() {
+        val spy = app("com.example.spy", "Spy")
+        val watch = app("com.example.watch", "Watch")
+        val signals = WatcherSignals(installedFromOutsideAStore = listOf(ref(spy)), notificationListeners = listOf(ref(spy), ref(watch)))
+        val findings = build(apps = listOf(spy, watch), signals = signals).findings
+        assertEquals("An app from outside a store can read your notifications", findings.single { it.severity == FindingSeverity.HIGH }.title)
+        assertEquals("1 app from a store can read your notifications", findings.single { it.severity == FindingSeverity.MEDIUM }.title)
+        assertEquals(2, findings.size)
     }
 
     @Test
