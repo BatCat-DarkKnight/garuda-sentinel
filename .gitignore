@@ -1,0 +1,38 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Signing material and build artifacts
+*.jks
+*.keystore
+keystore.properties
+*.apk
+*.aab
+/app/release/
+/app/debug/
+
+# Editor / IDE (machine specific). Shared settings in .idea (gradle.xml, vcs.xml,
+# inspection profile, run configuration producers, project name) stay tracked.
+.vscode/
+/.idea/workspace.xml
+/.idea/shelf/
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/androidTestResultsUserPreferences.xml
+/.idea/compiler.xml
+/.idea/misc.xml
+/.idea/markdown.xml
+/.idea/migrations.xml
+/.idea/other.xml
