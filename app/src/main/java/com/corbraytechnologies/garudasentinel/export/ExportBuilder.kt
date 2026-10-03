@@ -47,7 +47,7 @@ object ExportBuilder {
                 add("App usage not included: Usage access was not granted.")
             }
             if (ExportCategory.MEDIA in include && !includePhotoLocations) {
-                add("Photo GPS left out: \"Include photo locations\" was not selected.")
+                add("Photo GPS left out: \"Photo locations\" was not ticked.")
             } else if (ExportCategory.MEDIA in include && sources.media.none { it.gpsLat != null }) {
                 add("No photo GPS found. Either photos have no location, or photo location access was not granted.")
             }

@@ -35,7 +35,7 @@ data class ExportDocument(
     val includedCategories: List<String>,
     val excludedCategories: List<String>,
     val notes: List<String>,
-    /** False unless the user ticked "Include photo locations"; GPS fields are then null. */
+    /** False unless the user ticked "Photo locations"; GPS fields are then null. */
     val photoLocationsIncluded: Boolean = false,
     val device: DeviceInfo? = null,
     val battery: BatteryInfo? = null,
