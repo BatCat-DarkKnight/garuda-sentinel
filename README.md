@@ -73,7 +73,7 @@ app/src/main/java/com/corbraytechnologies/garudasentinel/
 
 Copyright (C) 2025-2026 Karl Corbray
 
-Garuda Sentinel is free software, licensed under the GNU General Public License v3.0. See `LICENSE` for the full text.
+Garuda Sentinel is free software, licensed under the GNU General Public License, version 3 or (at your option) any later version (GPL-3.0-or-later). See `LICENSE` for the full text.
 
 Published by Corbray Technologies.
 

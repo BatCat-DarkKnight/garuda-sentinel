@@ -62,7 +62,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 listOf(
                     "Copyright (C) 2025-2026 Karl Corbray",
                     "Published by Corbray Technologies",
-                    "Licensed under GPL-3.0",
+                    "Licensed under GPL-3.0-or-later",
                     "Fonts: IBM Plex Sans, IBM Plex Mono and Newsreader, licensed under the SIL Open Font License 1.1",
                 ).forEach {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
