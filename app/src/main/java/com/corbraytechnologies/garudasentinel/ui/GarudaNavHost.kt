@@ -1,82 +1,103 @@
 package com.corbraytechnologies.garudasentinel.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.PermMedia
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.corbraytechnologies.garudasentinel.ui.components.HairlineDivider
+import com.corbraytechnologies.garudasentinel.ui.components.TabIcons
 import com.corbraytechnologies.garudasentinel.ui.screens.AboutScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.AppScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.DeviceScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.EulaScreen
+import com.corbraytechnologies.garudasentinel.ui.screens.ExploreScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.FaqScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.FilesScreen
+import com.corbraytechnologies.garudasentinel.ui.screens.HelpScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.HistoryScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.HomeScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.MediaScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.PermissionsScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.UsageScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.WatchersScreen
-import com.corbraytechnologies.garudasentinel.ui.screens.YourDataScreen
-import kotlinx.coroutines.launch
+import com.corbraytechnologies.garudasentinel.ui.theme.GarudaType
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
-import com.corbraytechnologies.garudasentinel.ui.theme.SmallCorner
 
-enum class Dest(val route: String, val title: String, val icon: ImageVector) {
-    HOME("home", "Home", Icons.Default.Home),
-    YOUR_DATA("your_data", "Your Data", Icons.Default.Insights),
-    APPS("apps", "Apps", Icons.Default.Apps),
-    USAGE("usage", "App Usage", Icons.Default.Timer),
-    MEDIA("media", "Photos & Media", Icons.Default.PermMedia),
-    FILES("files", "Files", Icons.Default.Folder),
-    DEVICE("device", "Device & Network", Icons.Default.PhoneAndroid),
-    WATCHERS("watchers", "Who can watch", Icons.Default.Visibility),
-    HISTORY("history", "Scan History & Export", Icons.AutoMirrored.Filled.MenuBook),
-    PERMISSIONS("permissions", "Permissions", Icons.Default.Security),
-    FAQ("faq", "FAQ", Icons.AutoMirrored.Filled.Help),
-    ABOUT("about", "About", Icons.Default.Info),
+/** The four bottom bar tabs. Each is the root of its own part of the app. */
+enum class Tab(val route: String, val label: String, val icon: ImageVector) {
+    REPORT("report", "Report", TabIcons.Shield),
+    EXPLORE("explore", "Explore", TabIcons.Grid),
+    CONTROLS("controls", "Controls", TabIcons.Sliders),
+    HELP("help", "Help", TabIcons.Help),
+    ;
+
+    companion object {
+        fun ofRoute(route: String?): Tab? = entries.firstOrNull { it.route == route }
+    }
 }
+
+/** Screens that open from a tab, with a back arrow. [pattern] lists the optional arguments a screen accepts. */
+enum class Dest(val route: String, val pattern: String = route) {
+    APPS("apps", "apps?$ARG_PACKAGE={$ARG_PACKAGE}&$ARG_SORT={$ARG_SORT}"),
+    USAGE("usage"),
+    MEDIA("media", "media?$ARG_FILTER={$ARG_FILTER}"),
+    FILES("files"),
+    DEVICE("device"),
+    WATCHERS("watchers"),
+    HISTORY("history"),
+    PERMISSIONS("permissions"),
+    FAQ("faq"),
+    ABOUT("about"),
+}
+
+const val ARG_PACKAGE = "package"
+const val ARG_SORT = "sort"
+const val ARG_FILTER = "filter"
+
+/** Apps, scrolled to [packageName] and with its row open. */
+fun appRoute(packageName: String) = "${Dest.APPS.route}?$ARG_PACKAGE=$packageName"
+
+/** Apps, sorted with the apps that hold the most sensitive access first. */
+fun appsByAccessRoute() = "${Dest.APPS.route}?$ARG_SORT=$SORT_MOST_ACCESS"
+
+/** Photos and media, showing only photos that carry a location. */
+fun locatedPhotosRoute() = "${Dest.MEDIA.route}?$ARG_FILTER=$FILTER_LOCATED"
+
+const val SORT_MOST_ACCESS = "access"
+const val FILTER_LOCATED = "located"
 
 @Composable
 fun GarudaNavHost() {
@@ -86,82 +107,113 @@ fun GarudaNavHost() {
     when (eulaAccepted) {
         null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         false -> EulaScreen(onAccept = { main.acceptEula() })
-        true -> MainDrawer(main)
+        true -> MainTabs(main)
     }
 }
 
 @Composable
-private fun MainDrawer(main: MainViewModel) {
+private fun MainTabs(main: MainViewModel) {
     val nav = rememberNavController()
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-    val backStack by nav.currentBackStackEntryAsState()
-    val current = backStack?.destination?.route
-    val openMenu: () -> Unit = { scope.launch { drawerState.open() } }
-    val go: (Dest) -> Unit = { dest -> nav.navigateTop(dest) }
+    val backStack by nav.currentBackStack.collectAsStateWithLifecycle()
+    // The selected tab is the last tab root on the back stack; screens opened from Report sit
+    // directly on it, so the fallback is Report.
+    val selected = backStack.asReversed().firstNotNullOfOrNull { Tab.ofRoute(it.destination.route) } ?: Tab.REPORT
+    val go: (Dest) -> Unit = { nav.navigate(it.route) }
+    val goRoute: (String) -> Unit = { nav.navigate(it) }
+    val back: () -> Unit = { nav.popBackStack() }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(modifier = Modifier.width(300.dp), drawerContainerColor = Palette.Surface) {
-                Box(Modifier.verticalScroll(rememberScrollState())) {
-                    androidx.compose.foundation.layout.Column {
-                        Spacer(Modifier.height(24.dp))
-                        Text(
-                            "GARUDA SENTINEL",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                        )
-                        Dest.entries.forEach { dest ->
-                            NavigationDrawerItem(
-                                icon = { Icon(dest.icon, contentDescription = null) },
-                                label = { Text(dest.title) },
-                                selected = current == dest.route,
-                                onClick = {
-                                    scope.launch { drawerState.close() }
-                                    go(dest)
-                                },
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                shape = SmallCorner,
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    selectedContainerColor = Palette.AccentTint,
-                                    selectedIconColor = Palette.Accent,
-                                    selectedTextColor = Palette.Accent,
-                                    unselectedContainerColor = Palette.Surface,
-                                    unselectedIconColor = Palette.TextDim,
-                                    unselectedTextColor = Palette.Text,
-                                ),
-                            )
-                        }
-                        Spacer(Modifier.height(16.dp))
-                    }
-                }
+    Scaffold(
+        containerColor = Palette.Background,
+        bottomBar = { BottomTabs(selected, onSelect = { nav.selectTab(it) }) },
+    ) { padding ->
+        NavHost(
+            navController = nav,
+            startDestination = Tab.REPORT.route,
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+        ) {
+            composable(Tab.REPORT.route) { HomeScreen(main, onNavigate = go) }
+            composable(Tab.EXPLORE.route) { ExploreScreen(main, onNavigate = go) }
+            composable(Tab.CONTROLS.route) { HistoryScreen(onBack = null) }
+            composable(Tab.HELP.route) { HelpScreen(onNavigate = go) }
+
+            composable(
+                Dest.APPS.pattern,
+                arguments = listOf(
+                    navArgument(ARG_PACKAGE) { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument(ARG_SORT) { type = NavType.StringType; nullable = true; defaultValue = null },
+                ),
+            ) { entry ->
+                AppScreen(
+                    main,
+                    onBack = back,
+                    focusPackage = entry.arguments?.getString(ARG_PACKAGE),
+                    sortByAccess = entry.arguments?.getString(ARG_SORT) == SORT_MOST_ACCESS,
+                )
             }
-        },
-    ) {
-        NavHost(navController = nav, startDestination = Dest.HOME.route) {
-            composable(Dest.HOME.route) { HomeScreen(main, onMenuClick = openMenu, onNavigate = go) }
-            composable(Dest.YOUR_DATA.route) { YourDataScreen(main, onMenuClick = openMenu, onNavigate = go) }
-            composable(Dest.APPS.route) { AppScreen(main, onMenuClick = openMenu) }
-            composable(Dest.USAGE.route) { UsageScreen(main, onMenuClick = openMenu, onNavigate = go) }
-            composable(Dest.MEDIA.route) { MediaScreen(main, onMenuClick = openMenu, onNavigate = go) }
-            composable(Dest.FILES.route) { FilesScreen(main, onMenuClick = openMenu) }
-            composable(Dest.DEVICE.route) { DeviceScreen(onMenuClick = openMenu, onNavigate = go) }
-            composable(Dest.WATCHERS.route) { WatchersScreen(main, onMenuClick = openMenu, onNavigate = go) }
-            composable(Dest.HISTORY.route) { HistoryScreen(onMenuClick = openMenu) }
-            composable(Dest.PERMISSIONS.route) { PermissionsScreen(onMenuClick = openMenu) }
-            composable(Dest.FAQ.route) { FaqScreen(onMenuClick = openMenu) }
-            composable(Dest.ABOUT.route) { AboutScreen(onMenuClick = openMenu) }
+            composable(
+                Dest.MEDIA.pattern,
+                arguments = listOf(navArgument(ARG_FILTER) { type = NavType.StringType; nullable = true; defaultValue = null }),
+            ) { entry ->
+                MediaScreen(
+                    main,
+                    onBack = back,
+                    onNavigate = go,
+                    locatedOnly = entry.arguments?.getString(ARG_FILTER) == FILTER_LOCATED,
+                )
+            }
+            composable(Dest.USAGE.route) { UsageScreen(main, onBack = back, onNavigate = go) }
+            composable(Dest.FILES.route) { FilesScreen(main, onBack = back) }
+            composable(Dest.DEVICE.route) { DeviceScreen(onBack = back, onNavigate = go) }
+            composable(Dest.WATCHERS.route) { WatchersScreen(main, onBack = back, onNavigate = go) }
+            composable(Dest.HISTORY.route) { HistoryScreen(onBack = back) }
+            composable(Dest.PERMISSIONS.route) { PermissionsScreen(onBack = back) }
+            composable(Dest.FAQ.route) { FaqScreen(onBack = back) }
+            composable(Dest.ABOUT.route) { AboutScreen(onBack = back) }
         }
     }
 }
 
-private fun NavHostController.navigateTop(dest: Dest) {
-    navigate(dest.route) {
-        popUpTo(Dest.HOME.route) { saveState = true }
+/**
+ * Opens a tab at its root. Report is always at the bottom of the back stack, so back from
+ * any other tab root returns to Report, and back from Report leaves the app.
+ */
+private fun NavHostController.selectTab(tab: Tab) {
+    navigate(tab.route) {
+        popUpTo(Tab.REPORT.route)
         launchSingleTop = true
-        restoreState = true
+    }
+}
+
+/** Four equal tabs under a hairline. The selected tab is gold; there is no pill indicator. */
+@Composable
+private fun BottomTabs(selected: Tab, onSelect: (Tab) -> Unit) {
+    Column(Modifier.fillMaxWidth().background(Palette.Background)) {
+        HairlineDivider()
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(64.dp)
+                .selectableGroup(),
+        ) {
+            Tab.entries.forEach { tab ->
+                val isSelected = tab == selected
+                val color = if (isSelected) Palette.Accent else Palette.TextMuted
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(tab) })
+                        // TalkBack reads the label in normal case rather than the capitals shown.
+                        .clearAndSetSemantics { contentDescription = tab.label },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(tab.icon, contentDescription = null, tint = color)
+                    Spacer(Modifier.height(4.dp))
+                    Text(tab.label.toUpperCase(LocaleList.current), style = GarudaType.SectionLabel, color = color, maxLines = 1)
+                }
+            }
+        }
     }
 }

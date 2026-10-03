@@ -46,7 +46,7 @@ import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 private enum class Grant { YES, PARTIAL, NO }
 
 @Composable
-fun PermissionsScreen(onMenuClick: () -> Unit) {
+fun PermissionsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     // Bumped on resume and after each request so the statuses below are re-read.
     var refreshKey by remember { mutableIntStateOf(0) }
@@ -68,7 +68,7 @@ fun PermissionsScreen(onMenuClick: () -> Unit) {
         }
     }
 
-    GarudaScaffold(title = "Permissions", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "Permissions", onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),

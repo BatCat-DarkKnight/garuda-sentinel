@@ -76,8 +76,11 @@ val Typography = Typography(
     labelSmall = plexSans(11, 16, FontWeight.Medium, letterSpacing = 0.3),
 )
 
-/** IBM Plex Mono styles for section labels and numbers. */
+/** IBM Plex Mono styles for section labels and numbers, plus the large Newsreader titles. */
 object GarudaType {
+    /** Title at the top of a tab or screen. */
+    val ScreenTitle = newsreader(34, 37)
+
     /** Small caps section label. Set the text in capitals; the style does not change case. */
     val SectionLabel = TextStyle(
         fontFamily = PlexMonoFontFamily,

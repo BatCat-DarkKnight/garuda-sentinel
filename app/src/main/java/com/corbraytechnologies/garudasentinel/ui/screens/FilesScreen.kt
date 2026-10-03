@@ -51,7 +51,7 @@ import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 private const val LIST_LIMIT = 500
 
 @Composable
-fun FilesScreen(main: MainViewModel, onMenuClick: () -> Unit) {
+fun FilesScreen(main: MainViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     val vm = containerViewModel { FilesViewModel(it) }
     val tree by vm.treeUri.collectAsStateWithLifecycle()
@@ -62,7 +62,7 @@ fun FilesScreen(main: MainViewModel, onMenuClick: () -> Unit) {
         uri?.let { vm.onFolderPicked(context, it) }
     }
 
-    GarudaScaffold(title = "Files", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "Files", onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -98,7 +98,7 @@ fun FilesScreen(main: MainViewModel, onMenuClick: () -> Unit) {
                 }
                 items(files.take(LIST_LIMIT), key = { it.documentUri }) { FileRow(it) }
             } else if (tree != null && !scan.running) {
-                item { Text("No files found yet. Run a scan from Home, or pick another folder.", style = MaterialTheme.typography.bodyMedium) }
+                item { Text("No files found yet. Run a check from Report, or pick another folder.", style = MaterialTheme.typography.bodyMedium) }
             }
             item { Spacer(Modifier.height(16.dp)) }
         }

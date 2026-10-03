@@ -85,11 +85,11 @@ private val FAQS = listOf(
 )
 
 @Composable
-fun FaqScreen(onMenuClick: () -> Unit) {
+fun FaqScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var confirmLink by rememberSaveable { mutableStateOf(false) }
 
-    GarudaScaffold(title = "FAQ", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "FAQ", onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),

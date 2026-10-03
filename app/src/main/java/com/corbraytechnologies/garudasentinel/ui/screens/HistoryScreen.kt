@@ -63,7 +63,7 @@ import java.util.Locale
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 
 @Composable
-fun HistoryScreen(onMenuClick: () -> Unit) {
+fun HistoryScreen(onBack: (() -> Unit)?) {
     val vm = containerViewModel { HistoryViewModel(it) }
     val logs by vm.logs.collectAsStateWithLifecycle()
     val selection by vm.selection.collectAsStateWithLifecycle()
@@ -91,7 +91,7 @@ fun HistoryScreen(onMenuClick: () -> Unit) {
         }
     }
 
-    GarudaScaffold(title = "Scan History & Export", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "Scan History & Export", onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),

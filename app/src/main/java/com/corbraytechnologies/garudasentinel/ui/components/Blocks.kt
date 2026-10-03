@@ -47,6 +47,20 @@ import com.corbraytechnologies.garudasentinel.ui.theme.SmallCorner
 /** Side margin shared by all blocks in this file. */
 val ScreenGutter: Dp = 24.dp
 
+/** Newsreader title at the top of a screen, marked as a heading for TalkBack. */
+@Composable
+fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = GarudaType.ScreenTitle,
+        color = Palette.Text,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = ScreenGutter, end = ScreenGutter, top = 24.dp, bottom = 8.dp)
+            .semantics { heading() },
+    )
+}
+
 /** Monospace caps label that opens a section, with the standard space above and below. */
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {

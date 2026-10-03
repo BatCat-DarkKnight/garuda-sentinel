@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
@@ -31,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,16 +60,23 @@ import com.corbraytechnologies.garudasentinel.utils.formatDate
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 
 private enum class AppFilter(val label: String) { USER("Installed by you"), SYSTEM("System"), ALL("All") }
+/** Rows above the first app: summary, search, filter chips, sort chips and the count. */
+private const val HEADER_ITEMS = 5
+
 private enum class AppSort(val label: String) { NAME("Name"), UPDATED("Recently updated"), INSTALLED("Recently installed"), SENSITIVE("Most access") }
 
 @Composable
-fun AppScreen(main: MainViewModel, onMenuClick: () -> Unit) {
+fun AppScreen(main: MainViewModel, onBack: () -> Unit, focusPackage: String? = null, sortByAccess: Boolean = false) {
     val apps by main.apps.collectAsStateWithLifecycle()
-    var filter by rememberSaveable { mutableStateOf(AppFilter.USER) }
-    var sort by rememberSaveable { mutableStateOf(AppSort.NAME) }
-    var query by rememberSaveable { mutableStateOf("") }
-
     val ownPackage = LocalContext.current.packageName
+    // An app opened from a finding is shown in the list that holds it, with its row open.
+    var filter by rememberSaveable {
+        mutableStateOf(if (apps.any { it.packageName == focusPackage && it.isSystemApp }) AppFilter.ALL else AppFilter.USER)
+    }
+    var sort by rememberSaveable { mutableStateOf(if (sortByAccess) AppSort.SENSITIVE else AppSort.NAME) }
+    var query by rememberSaveable { mutableStateOf("") }
+    val listState = rememberLazyListState()
+    var focused by rememberSaveable { mutableStateOf(false) }
     val shown = remember(apps, filter, sort, query) {
         when (filter) {
             AppFilter.USER -> AppLists.userInstalled(apps, ownPackage)
@@ -86,12 +95,22 @@ fun AppScreen(main: MainViewModel, onMenuClick: () -> Unit) {
             .toList()
     }
 
-    GarudaScaffold(title = "Installed Apps", onMenuClick = onMenuClick) { padding ->
+    LaunchedEffect(focusPackage, shown) {
+        if (focusPackage == null || focused) return@LaunchedEffect
+        val index = shown.indexOfFirst { it.packageName == focusPackage }
+        if (index >= 0) {
+            listState.scrollToItem(HEADER_ITEMS + index)
+            focused = true
+        }
+    }
+
+    GarudaScaffold(title = "Installed Apps", onBack = onBack) { padding ->
         if (apps.isEmpty()) {
-            EmptyStateMessage(Icons.Default.Apps, "No apps yet. Run a scan from Home.", Modifier.padding(padding))
+            EmptyStateMessage(Icons.Default.Apps, "No apps yet. Run a check from Report.", Modifier.padding(padding))
             return@GarudaScaffold
         }
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -117,7 +136,7 @@ fun AppScreen(main: MainViewModel, onMenuClick: () -> Unit) {
                 }
             }
             item { Text(countOf(shown.size, "app"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            items(shown, key = { it.packageName }) { AppCard(it) }
+            items(shown, key = { it.packageName }) { AppCard(it, startExpanded = it.packageName == focusPackage) }
             item { Spacer(Modifier.height(16.dp)) }
         }
     }
@@ -143,8 +162,8 @@ private fun AppSummary(apps: List<AppMetadataEntity>) {
 }
 
 @Composable
-private fun AppCard(app: AppMetadataEntity) {
-    var expanded by rememberSaveable(app.packageName) { mutableStateOf(false) }
+private fun AppCard(app: AppMetadataEntity, startExpanded: Boolean = false) {
+    var expanded by rememberSaveable(app.packageName) { mutableStateOf(startExpanded) }
     val context = LocalContext.current
     val permissions = remember(app) {
         // Special access can only be checked for this app itself, through AppOpsManager.

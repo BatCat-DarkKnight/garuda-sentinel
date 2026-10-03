@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,29 +42,40 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 
-/** Standard screen frame: title bar with the drawer button and optional actions. */
+/**
+ * Frame for a screen opened from a tab: a top bar with a back arrow and a hairline under it.
+ * Window insets are handled once around the navigation host, so none are applied here.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GarudaScaffold(
     title: String,
-    onMenuClick: () -> Unit,
+    onBack: (() -> Unit)?,
     actions: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onMenuClick) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
-                    }
-                },
-                actions = { actions() },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+            Column {
+                TopAppBar(
+                    title = { Text(title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    navigationIcon = {
+                        if (onBack != null) {
+                            // IconButton gives a 48dp touch target.
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Palette.Text)
+                            }
+                        }
+                    },
+                    actions = { actions() },
+                    windowInsets = WindowInsets(0),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                )
+                HairlineDivider()
+            }
         },
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
         content = content,
     )
 }

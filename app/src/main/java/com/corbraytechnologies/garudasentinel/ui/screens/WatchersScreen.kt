@@ -51,7 +51,7 @@ private const val SAFETY_URL = "https://stopstalkerware.org"
  * removing anything is left to the system screens.
  */
 @Composable
-fun WatchersScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest) -> Unit) {
+fun WatchersScreen(main: MainViewModel, onBack: () -> Unit, onNavigate: (Dest) -> Unit) {
     val vm = containerViewModel { WatchersViewModel(it) }
     val apps by main.apps.collectAsStateWithLifecycle()
     val signals by vm.signals.collectAsStateWithLifecycle()
@@ -65,7 +65,7 @@ fun WatchersScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (De
 
     GarudaScaffold(
         title = "Who can watch",
-        onMenuClick = onMenuClick,
+        onBack = onBack,
         actions = {
             IconButton(onClick = { vm.refresh() }, enabled = !busy && apps.isNotEmpty()) {
                 Icon(Icons.Default.Visibility, contentDescription = "Check again")
@@ -74,7 +74,7 @@ fun WatchersScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (De
     ) { padding ->
         val current = signals
         if (apps.isEmpty()) {
-            EmptyStateMessage(Icons.Default.Visibility, "Run a scan from Home first, then this screen can check your apps.", Modifier.padding(padding))
+            EmptyStateMessage(Icons.Default.Visibility, "Run a check from Report first, then this screen can check your apps.", Modifier.padding(padding))
             return@GarudaScaffold
         }
         LazyColumn(

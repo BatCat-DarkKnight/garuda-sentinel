@@ -74,10 +74,10 @@ private enum class MediaFilter(val label: String, val type: String?) {
 private const val LIST_LIMIT = 500
 
 @Composable
-fun MediaScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest) -> Unit) {
+fun MediaScreen(main: MainViewModel, onBack: () -> Unit, onNavigate: (Dest) -> Unit, locatedOnly: Boolean = false) {
     val context = LocalContext.current
     val media by main.media.collectAsStateWithLifecycle()
-    var filter by rememberSaveable { mutableStateOf(MediaFilter.ALL) }
+    var filter by rememberSaveable { mutableStateOf(if (locatedOnly) MediaFilter.WITH_GPS else MediaFilter.ALL) }
     var access by remember { mutableStateOf(MediaAccess.NONE) }
     var hasPhotoLocation by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
@@ -93,7 +93,7 @@ fun MediaScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest)
         }
     }
 
-    GarudaScaffold(title = "Photos & Media", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "Photos & Media", onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -122,7 +122,7 @@ fun MediaScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest)
                 }
             }
             if (media.isEmpty()) {
-                item { EmptyStateMessage(Icons.Default.PermMedia, "No media yet. Run a scan from Home.") }
+                item { EmptyStateMessage(Icons.Default.PermMedia, "No media yet. Run a check from Report.") }
                 return@LazyColumn
             }
             item { MediaSummary(media) }

@@ -19,10 +19,10 @@ import com.corbraytechnologies.garudasentinel.ui.components.GarudaScaffold
 import com.corbraytechnologies.garudasentinel.ui.components.SectionCard
 
 @Composable
-fun AboutScreen(onMenuClick: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val version = remember { (context.applicationContext as GarudaApp).container.appVersion }
-    GarudaScaffold(title = "About", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "About", onBack = onBack) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),

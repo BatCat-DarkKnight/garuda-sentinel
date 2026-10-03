@@ -50,7 +50,7 @@ import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 private enum class UsageRange(val label: String) { TODAY("Today"), WEEK("Last 7 days") }
 
 @Composable
-fun UsageScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest) -> Unit) {
+fun UsageScreen(main: MainViewModel, onBack: () -> Unit, onNavigate: (Dest) -> Unit) {
     val context = LocalContext.current
     val usage by main.usage.collectAsStateWithLifecycle()
     var granted by remember { mutableStateOf(true) }
@@ -65,7 +65,7 @@ fun UsageScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest)
 
     GarudaScaffold(
         title = "App Usage",
-        onMenuClick = onMenuClick,
+        onBack = onBack,
         actions = {
             IconButton(onClick = { main.refreshUsage() }, enabled = granted) {
                 Icon(Icons.Default.Refresh, contentDescription = "Refresh")

@@ -39,7 +39,7 @@ import com.corbraytechnologies.garudasentinel.utils.formatDuration
 import java.util.Locale
 
 @Composable
-fun DeviceScreen(onMenuClick: () -> Unit, onNavigate: (Dest) -> Unit) {
+fun DeviceScreen(onBack: () -> Unit, onNavigate: (Dest) -> Unit) {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     val vm = containerViewModel { DeviceViewModel(it) }
@@ -59,7 +59,7 @@ fun DeviceScreen(onMenuClick: () -> Unit, onNavigate: (Dest) -> Unit) {
 
     GarudaScaffold(
         title = "Device & Network",
-        onMenuClick = onMenuClick,
+        onBack = onBack,
         actions = { IconButton(onClick = { vm.refresh() }) { Icon(Icons.Default.Refresh, contentDescription = "Refresh") } },
     ) { padding ->
         val s = snapshot

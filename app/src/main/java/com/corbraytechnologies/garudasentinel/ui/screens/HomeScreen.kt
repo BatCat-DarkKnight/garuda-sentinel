@@ -73,7 +73,7 @@ import com.corbraytechnologies.garudasentinel.utils.formatDuration
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 
 @Composable
-fun HomeScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest) -> Unit) {
+fun HomeScreen(main: MainViewModel, onNavigate: (Dest) -> Unit) {
     val context = LocalContext.current
     val scan by main.scanState.collectAsStateWithLifecycle()
     val logs by main.scanLogs.collectAsStateWithLifecycle()
@@ -93,7 +93,7 @@ fun HomeScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest) 
 
     val lastLog = logs.firstOrNull()
 
-    GarudaScaffold(title = "", onMenuClick = onMenuClick) { padding ->
+    GarudaScaffold(title = "", onBack = null) { padding ->
         Column(
             Modifier
                 .fillMaxSize()
@@ -175,9 +175,6 @@ fun HomeScreen(main: MainViewModel, onMenuClick: () -> Unit, onNavigate: (Dest) 
                 }
             }
 
-            OutlinedButton(onClick = { onNavigate(Dest.YOUR_DATA) }, modifier = Modifier.fillMaxWidth()) {
-                Text("What does this say about me?")
-            }
             Spacer(Modifier.height(16.dp))
         }
     }
