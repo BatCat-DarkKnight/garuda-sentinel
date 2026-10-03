@@ -36,10 +36,28 @@ data class WatcherSignals(
 /** How much attention a finding deserves. */
 enum class WatcherLevel { ATTENTION, CHECK, FINE }
 
+/** Which check produced a finding, so the Report and the settings links can tell them apart. */
+enum class WatcherKind {
+    ACCESSIBILITY,
+    SYSTEM_ACCESSIBILITY,
+    NOTIFICATIONS,
+    DEVICE_ADMIN,
+    CERTIFICATES,
+    NO_SCREEN_LOCK,
+    BACKGROUND_LOCATION,
+    HIDDEN_APPS,
+    SIDELOADED,
+    DEVELOPER,
+    DEFAULT_SMS,
+    SCREEN_LOCK_ON,
+    NOT_CHECKED,
+}
+
 /** One line of the "Who can watch" screen. */
 data class WatcherFinding(
     val level: WatcherLevel,
     val title: String,
     val explanation: String,
     val apps: List<WatcherApp> = emptyList(),
+    val kind: WatcherKind,
 )

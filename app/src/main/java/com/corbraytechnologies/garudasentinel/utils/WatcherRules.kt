@@ -2,6 +2,7 @@ package com.corbraytechnologies.garudasentinel.utils
 
 import com.corbraytechnologies.garudasentinel.model.WatcherApp
 import com.corbraytechnologies.garudasentinel.model.WatcherFinding
+import com.corbraytechnologies.garudasentinel.model.WatcherKind
 import com.corbraytechnologies.garudasentinel.model.WatcherLevel
 import com.corbraytechnologies.garudasentinel.model.WatcherSignals
 
@@ -21,6 +22,7 @@ object WatcherRules {
                     "An accessibility service can see everything on screen and what you type. Some apps need it, " +
                         "for example screen readers and password managers. Anything you do not recognise is worth checking.",
                     accessibility,
+                    WatcherKind.ACCESSIBILITY,
                 )
             )
         }
@@ -32,6 +34,7 @@ object WatcherRules {
                     "Accessibility services from your phone maker",
                     "These come with the phone or its system apps.",
                     systemAccessibility,
+                    WatcherKind.SYSTEM_ACCESSIBILITY,
                 )
             )
         }
@@ -44,6 +47,7 @@ object WatcherRules {
                     "These apps see every notification, including message previews and one-time codes. " +
                         "Smart watches and car apps normally need this.",
                     listeners,
+                    WatcherKind.NOTIFICATIONS,
                 )
             )
         }
@@ -56,6 +60,7 @@ object WatcherRules {
                     "A device administrator can lock the phone, change the password or erase it. Work profiles " +
                         "and device finders use this.",
                     admins,
+                    WatcherKind.DEVICE_ADMIN,
                 )
             )
         }
@@ -67,6 +72,7 @@ object WatcherRules {
                     "A certificate installed by hand lets whoever issued it read traffic from some apps. " +
                         "Company phones often have one. Otherwise it should not be there.",
                     signals.userCaCertificates,
+                    WatcherKind.CERTIFICATES,
                 )
             )
         }
@@ -76,6 +82,7 @@ object WatcherRules {
                     WatcherLevel.ATTENTION,
                     "No screen lock",
                     "Anyone holding the phone can open it and see everything, including this app.",
+                    kind = WatcherKind.NO_SCREEN_LOCK,
                 )
             )
         }
@@ -87,6 +94,7 @@ object WatcherRules {
                     "Apps that can follow your location in the background",
                     "These apps can read your location even when you are not using them.",
                     background,
+                    WatcherKind.BACKGROUND_LOCATION,
                 )
             )
         }
@@ -99,6 +107,7 @@ object WatcherRules {
                     "An app with no icon does not show on the home screen. Plug-ins and keyboards are often like " +
                         "this, and so is monitoring software.",
                     hidden,
+                    WatcherKind.HIDDEN_APPS,
                 )
             )
         }
@@ -111,6 +120,7 @@ object WatcherRules {
                     "These were installed from a file or another app rather than a store. Garuda Sentinel itself " +
                         "is one of them if you installed it from a file.",
                     sideloaded,
+                    WatcherKind.SIDELOADED,
                 )
             )
         }
@@ -119,7 +129,7 @@ object WatcherRules {
                 signals.usbDebuggingEnabled -> "USB debugging is on, so a computer with a cable can read and control much of the phone."
                 else -> "Developer options are on. On its own this changes little, but it allows USB debugging."
             }
-            add(WatcherFinding(WatcherLevel.CHECK, "Developer settings", what))
+            add(WatcherFinding(WatcherLevel.CHECK, "Developer settings", what, kind = WatcherKind.DEVELOPER))
         }
         signals.defaultSmsApp?.let {
             add(
@@ -128,11 +138,12 @@ object WatcherRules {
                     "App that handles your text messages",
                     "The default messaging app can read and send SMS. It should be one you chose.",
                     listOf(it),
+                    WatcherKind.DEFAULT_SMS,
                 )
             )
         }
         if (signals.screenLockEnabled) {
-            add(WatcherFinding(WatcherLevel.FINE, "Screen lock is on", "The phone asks for your PIN, pattern, password or biometrics."))
+            add(WatcherFinding(WatcherLevel.FINE, "Screen lock is on", "The phone asks for your PIN, pattern, password or biometrics.", kind = WatcherKind.SCREEN_LOCK_ON))
         }
         if (signals.unavailable.isNotEmpty()) {
             add(
@@ -140,6 +151,7 @@ object WatcherRules {
                     WatcherLevel.FINE,
                     "Not checked on this phone",
                     signals.unavailable.joinToString(" "),
+                    kind = WatcherKind.NOT_CHECKED,
                 )
             )
         }
