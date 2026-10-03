@@ -1,7 +1,5 @@
 package com.corbraytechnologies.garudasentinel.ui.screens
 
-import android.content.ClipData
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,20 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,6 +30,7 @@ import com.corbraytechnologies.garudasentinel.ui.Dest
 import com.corbraytechnologies.garudasentinel.ui.MainViewModel
 import com.corbraytechnologies.garudasentinel.ui.appRoute
 import com.corbraytechnologies.garudasentinel.ui.components.BarredBlock
+import com.corbraytechnologies.garudasentinel.ui.components.CopyableAddress
 import com.corbraytechnologies.garudasentinel.ui.components.GarudaScaffold
 import com.corbraytechnologies.garudasentinel.ui.components.HairlineDivider
 import com.corbraytechnologies.garudasentinel.ui.components.ListRow
@@ -54,9 +46,8 @@ import com.corbraytechnologies.garudasentinel.ui.components.openSettings
 import com.corbraytechnologies.garudasentinel.ui.theme.GarudaType
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 import com.corbraytechnologies.garudasentinel.utils.WatcherRules
-import kotlinx.coroutines.launch
 
-/** Shown as text with a copy button, never as a link: opening a browser leaves history on the phone. */
+/** Shown as text with a copy button, never as a link. */
 private const val SAFETY_ADDRESS = "stopstalkerware.org"
 
 /**
@@ -146,9 +137,6 @@ fun WatchersScreen(main: MainViewModel, onBack: () -> Unit, onRoute: (String) ->
 /** Advice for people who may be monitored by someone close to them, shown before any finding. */
 @Composable
 private fun SafetyNote() {
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    var copied by remember { mutableStateOf(false) }
     BarredBlock(barColor = Palette.Ok, top = 4.dp, bottom = 4.dp) {
         Text(
             "Worried someone else set up your phone?",
@@ -163,20 +151,7 @@ private fun SafetyNote() {
             style = MaterialTheme.typography.bodyMedium,
             color = Palette.TextDim,
         )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            SelectionContainer {
-                Text(SAFETY_ADDRESS, style = GarudaType.NumberMedium, color = Palette.Text)
-            }
-            TextAction(
-                if (copied) "Copied" else "Copy address",
-                onClick = {
-                    scope.launch {
-                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Address", SAFETY_ADDRESS)))
-                        copied = true
-                    }
-                },
-            )
-        }
+        CopyableAddress(SAFETY_ADDRESS)
     }
 }
 

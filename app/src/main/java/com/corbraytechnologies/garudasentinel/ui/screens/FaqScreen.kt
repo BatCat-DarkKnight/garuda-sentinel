@@ -3,7 +3,6 @@ package com.corbraytechnologies.garudasentinel.ui.screens
 import androidx.core.net.toUri
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,14 +19,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,11 +35,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.corbraytechnologies.garudasentinel.ui.components.ConfirmOpenLink
+import com.corbraytechnologies.garudasentinel.ui.components.CopyableAddress
 import com.corbraytechnologies.garudasentinel.ui.components.GarudaScaffold
 import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 
-private const val NIST_METADATA_URL = "https://csrc.nist.gov/glossary/term/metadata"
+/** Shown as text with a copy button, never as a link. */
+private const val NIST_METADATA_ADDRESS = "csrc.nist.gov/glossary/term/metadata"
 private const val SUPPORT_EMAIL = "info@corbraytechnologies.com"
 
 private val FAQS = listOf(
@@ -77,7 +75,7 @@ private val FAQS = listOf(
         "ask for the password again. Inside is one file, garuda-export.json, which you can open in any text editor. " +
         "If you forget the password, nobody can open the file.",
     "How do I delete my data?" to
-        "Open Scan History & Export and tap \"Delete all scan data\". Uninstalling the app also deletes everything it stored. " +
+        "Open Controls and tap \"Delete all scan data\". Uninstalling the app also deletes everything it stored. " +
         "You can also turn on \"Forget results when I close the app\" there, which keeps results in memory only, so they disappear when " +
         "the app closes.",
     "Can I get paid for my data?" to
@@ -87,7 +85,6 @@ private val FAQS = listOf(
 @Composable
 fun FaqScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    var confirmLink by rememberSaveable { mutableStateOf(false) }
 
     GarudaScaffold(title = "FAQ", onBack = onBack) { padding ->
         LazyColumn(
@@ -96,7 +93,13 @@ fun FaqScreen(onBack: () -> Unit) {
         ) {
             items(FAQS) { (question, answer) -> FaqCard(question, answer) }
             item {
-                TextButton(onClick = { confirmLink = true }) { Text("Read NIST's definition of metadata") }
+                Text(
+                    "NIST's definition of metadata:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                CopyableAddress(NIST_METADATA_ADDRESS)
                 Button(
                     onClick = {
                         val intent = Intent(Intent.ACTION_SENDTO, "mailto:$SUPPORT_EMAIL".toUri())
@@ -114,8 +117,6 @@ fun FaqScreen(onBack: () -> Unit) {
             }
         }
     }
-
-    ConfirmOpenLink(url = NIST_METADATA_URL.takeIf { confirmLink }, onDismiss = { confirmLink = false })
 }
 
 @Composable

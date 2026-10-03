@@ -295,21 +295,3 @@ class ControlsViewModel(private val c: AppContainer) : ViewModel() {
     }
 }
 
-/** Reads the watcher signals on demand from the apps found by the last scan. */
-class WatchersViewModel(private val c: AppContainer) : ViewModel() {
-    private val _signals = MutableStateFlow<WatcherSignals?>(null)
-    val signals: StateFlow<WatcherSignals?> = _signals.asStateFlow()
-
-    private val _busy = MutableStateFlow(false)
-    val busy: StateFlow<Boolean> = _busy.asStateFlow()
-
-    fun refresh() = viewModelScope.launch {
-        _busy.value = true
-        val apps = withContext(Dispatchers.IO) { c.db.appDao().getAll() }
-        _signals.value = c.watcherCollector.collect(apps)
-        _busy.value = false
-    }
-
-    fun appSettingsIntent(packageName: String) = c.watcherCollector.appSettingsIntent(packageName)
-}
-

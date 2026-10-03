@@ -2,7 +2,7 @@
 
 Garuda Sentinel is an Android app that shows you the metadata your own phone already holds, and explains what it could reveal about you. It reads; it never uploads. This document describes how the app is built and how each privacy promise is enforced in code, so you can check the claims yourself.
 
-Version 2.0.0. Package `com.corbraytechnologies.garudasentinel`. Distribution is by sideloaded APK.
+Version 2.1.0. Package `com.corbraytechnologies.garudasentinel`. Distribution is by sideloaded APK.
 
 ## What the app does
 
@@ -15,9 +15,9 @@ Version 2.0.0. Package `com.corbraytechnologies.garudasentinel`. Distribution is
 | Device and network | Model, Android version, security patch, screen, locale, uptime, battery, connection, VPN, local addresses, DNS, Wi-Fi name and BSSID where Android allows, keyboards. | `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` |
 | Location | One reading, only when the user taps "Read my location". | Coarse and fine location |
 | Who can watch | Accessibility services, notification access, device administrators, background location, apps from outside a store, apps with no launcher icon, certificates added by hand, default SMS app, screen lock, developer options, USB debugging. Read only. | None beyond the above |
-| Your Data | Plain-language summaries built from the scan: places from photo GPS, daily routine, interests by app category, which apps can reach your sensors. | None |
-| What changed | Differences from the previous scan: apps installed or removed, sensitive permissions newly granted, new watcher signals. | None |
-| Export | One JSON file, or a password-protected ZIP, to a location chosen in the system Save dialog, with per-category include and exclude. | None |
+| Report | Ranked findings built from the scan and the watcher signals (see "Findings" below), a tally, and how many checks passed. | None |
+| Since your last check | Up to five differences from the previous scan: apps installed or removed, sensitive permissions newly granted, new watcher signals. Hidden in memory-only mode. | None |
+| Export | A password-protected ZIP (selected by default) or one plain JSON file, to a location chosen in the system Save dialog, with per-category include and exclude. | None |
 
 The app never reads message contents, contacts, call logs, browsing history or keystrokes. It has no accessibility service and no notification listener.
 
@@ -28,9 +28,10 @@ The app never reads message contents, contacts, call logs, browsing history or k
 | No network access | `AndroidManifest.xml` does not request `INTERNET`, so the OS blocks every connection, including from libraries. The image loader is Coil 3 without its network artifact, so no HTTP client is on the classpath. | `aapt2 dump permissions <apk>`; `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` |
 | Results stay on the phone | Room database and DataStore in app-private storage. Nothing is written to shared storage. | Read `ExportService`; the only writer is the Save dialog |
 | No backups or transfer | `allowBackup="false"` plus `res/xml/data_extraction_rules.xml`, which excludes every domain from cloud backup and device transfer. | Read the manifest and that file |
-| Exports are deliberate | Writes go only to a URI returned by `ActivityResultContracts.CreateDocument`. Photo GPS is excluded unless the user opts in; location readings are off by default. | `ExportBuilder`, `ExportService`, `ExportBuilderTest` |
+| Exports are deliberate | Writes go only to a URI returned by `ActivityResultContracts.CreateDocument`. Photo GPS is excluded unless the user opts in; location readings are off by default; the password-protected ZIP is selected by default. | `ExportBuilder`, `ExportService`, `ExportDefaults`, `ExportBuilderTest`, `ExportDefaultsTest` |
 | Optional encryption | zip4j writes a standard ZIP with AES-256 (WinZip AE-2). No cryptography is written by hand. The single entry is always `garuda-export.json` with a fixed timestamp, so the readable ZIP metadata says nothing about the user. | `EncryptedExport`, `EncryptedExportTest`; open a file with 7-Zip |
-| Nothing is invented | Fields Android does not expose are null or "Not available". Estimates are labelled "estimated". Signals that cannot be read are reported as not checked. | `WatcherRules`, `MediaDates`, collectors |
+| Nothing is invented | Fields Android does not expose are null or "Not available". Estimates are labelled "estimated". Signals that cannot be read, and checks skipped for a missing permission, are reported as not checked. | `WatcherRules`, `FindingRules`, `MediaDates`, collectors |
+| Read only, no links | Every action opens an Android settings screen with a standard intent; the app changes no setting and no other app. Outside resources are shown as text with a "Copy address" button, so no browser history is created. | `SettingsIntents`, `CopyableAddress` |
 | No background work | No services, receivers, workers or alarms of the app's own. Scans run only while the app is open. | Merged manifest: only the launcher activity plus AndroidX components |
 | Delete means delete | "Delete all scan data" clears every table (Room then checkpoints and vacuums) and releases every folder grant the app holds. | `DataWiper` |
 | Optional no-disk mode | "Forget results when I close the app" opens the database with `inMemoryDatabaseBuilder` and deletes any file left on disk. | `StorageMode`, `AppDatabase.create` |
@@ -50,21 +51,51 @@ com.corbraytechnologies.garudasentinel
                           DeviceCollector, LocationCollector, WatcherCollector
   data/                 Room entities, DAOs, database and migrations; DataStore settings; StorageMode
   scan/ScanCoordinator  Runs a scan on an application scope, per-step status, writes results and a snapshot
-  export/               Export schema and pure ExportBuilder, ExportService (Save dialog),
+  export/               Export schema and pure ExportBuilder, ExportDefaults, ExportService (Save dialog),
                           EncryptedExport (zip4j), DataWiper
+  findings/             Pure FindingRules (what the Report ranks), ReportText and WatcherRows (screen wording)
   model/                Serializable value types shared by collectors, export and snapshots
   permissions/          Permission and app-op checks, plus the intents that open the right system screens
-  ui/                   Navigation host, view models, screens, shared components, theme
+  ui/                   Navigation host and bottom bar, view models, screens, shared components, theme
   utils/                Pure logic: AppCategorizer, SensitivePermissions, WatcherRules, ScanDiff,
-                          MediaDates, AppLists, formatters
+                          MediaDates, AppLists, DeleteSummary, formatters
 ```
 
-Rule of thumb in this codebase: decisions and formatting live in pure classes under `utils` or `model` so they can be unit tested on the JVM, while Compose code stays declarative and Android APIs stay inside `collect`.
+Rule of thumb in this codebase: decisions and formatting live in pure classes under `findings`, `utils` or `model` so they can be unit tested on the JVM, while Compose code stays declarative and Android APIs stay inside `collect`.
+
+## Navigation
+
+A bottom bar with four tabs replaces the drawer used up to 2.0.0. Each tab root is a screen without a back arrow; everything opened from a tab has a top bar with a back arrow.
+
+| Tab | Root screen | Opens |
+|---|---|---|
+| Report | Ranked findings, "Since your last check", passed checks, Your data | Who can watch, one app's row in Apps, Apps sorted by access, located photos, Permissions, Android settings screens |
+| Explore | "Your data": Apps, Photos and media, Screen time, Files, Device and network | The existing data screens |
+| Controls | Export a copy, Keeping results (memory-only mode, screenshot blocking), Delete | Past checks |
+| Help | Permissions, FAQ, About | Those screens |
+
+Report is always at the bottom of the back stack: back from any other tab root returns to Report, and back from Report leaves the app.
+
+## Findings
+
+`FindingRules` builds the Report from data the scan already collects; it adds no collection.
+
+| Severity | Rule | Action |
+|---|---|---|
+| High | An app the user installed from outside a store holds notification access, an accessibility service or device admin | Opens the app's row in Apps |
+| High | Any other "needs attention" watcher (accessibility, notification access or device admin from a store app, a certificate added by hand, no screen lock) | Opens the matching Android setting |
+| Medium | Photos with GPS coordinates | Opens Photos and media filtered to located photos |
+| Medium | Apps the user installed with microphone, camera or precise location granted (one finding each) | Opens Apps sorted by most access |
+| Medium | Background location granted to an app the user installed | Opens Apps sorted by most access |
+| Low | USB debugging on | Opens developer options |
+| Low | Any other "worth knowing" watcher (apps with no icon, apps from outside a store, developer options) | Opens the matching Android setting, or App info when one app is involved |
+
+Findings are ranked high, then medium, then low, and by the newest app update or photo date within a severity. Apps are named when there are three or fewer. Garuda Sentinel itself is left out of the app-based rules. Every "all clear" watcher counts as passed, except "Not checked on this phone". A check that could not run (no photo access, no photo location access, or settings Android would not let the app read) is shown as a neutral row instead of being hidden.
 
 ## Scan flow
 
 ```
-Home: START SCAN
+Report: Run a check (or Check again)
   ScanCoordinator.start() on the application scope (a scan survives navigation)
     parallel steps, each reporting Waiting, Running, Done, Skipped or Failed:
       AppCollector    -> apps table
@@ -76,7 +107,7 @@ Home: START SCAN
       plus watcher signals, used by ScanDiff for "What changed since your last scan"
 ```
 
-A missing permission never blocks a scan. The step is marked Skipped with the reason, and the reason is stored in the scan log and shown on Home.
+A missing permission never blocks a scan. The step is marked Skipped with the reason, and the reason is stored in the scan log and shown in Past checks. The Report also shows a neutral row for a photo check that could not run.
 
 ## Data stored
 

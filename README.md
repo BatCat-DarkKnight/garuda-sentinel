@@ -2,6 +2,8 @@
 
 A personal Android privacy tool by Corbray Technologies. It shows you the metadata your own phone holds (apps and their permissions, photo EXIF including GPS, app usage, device and network facts) and explains what it could reveal.
 
+The app opens on a Report: a ranked list of what is worth a look, each with a plain sentence and one action that opens the right Android settings screen. The raw data sits under Explore, export and deletion under Controls, and permissions, FAQ and About under Help. The app only reads; it never changes another app or a setting.
+
 **Nothing leaves the phone.** The app does not request the `INTERNET` permission, so Android blocks every network connection. Results live in private app storage, are excluded from backup and device transfer, and can be exported only to a file the user picks. Distribution is by sideloaded APK only.
 
 ## Build
@@ -45,9 +47,11 @@ app/src/main/java/com/corbraytechnologies/garudasentinel/
   collect/              One collector per data source; reads the OS, never guesses
   data/                 Room entities, DAOs, database (schema exported to app/schemas), DataStore settings
   scan/ScanCoordinator  Runs a scan on the app scope with per-step status; writes Room
-  export/               Export schema (v2), pure ExportBuilder, ExportService (Save dialog), DataWiper
+  export/               Export schema (v2), pure ExportBuilder, ExportDefaults, ExportService (Save dialog), DataWiper
+  findings/             Pure rules that rank what the Report shows, plus its wording
   permissions/          Permission checks and settings intents; nothing is gated
-  ui/                   Navigation host, view models, screens, shared components, theme
+  ui/                   Bottom bar navigation (Report, Explore, Controls, Help), view models, screens,
+                        shared components, theme
   utils/                App and media categorizer, sensitive-permission labels, formatters
 ```
 

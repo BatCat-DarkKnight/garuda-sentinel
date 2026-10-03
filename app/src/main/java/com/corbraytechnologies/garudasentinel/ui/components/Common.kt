@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.core.net.toUri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +33,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -186,26 +183,3 @@ fun EmptyStateMessage(icon: ImageVector, message: String, modifier: Modifier = M
         Text(message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
-
-/**
- * Asks before sending the user to a browser, because the app itself never goes online.
- * Shown by [ConfirmOpenLink] when [url] is not null.
- */
-@Composable
-fun ConfirmOpenLink(url: String?, onDismiss: () -> Unit) {
-    if (url == null) return
-    val context = LocalContext.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Open in your browser?") },
-        text = { Text("This opens $url in your web browser. Garuda Sentinel itself does not connect to the internet.") },
-        confirmButton = {
-            TextButton(onClick = {
-                onDismiss()
-                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
-            }) { Text("Open") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
-}
-

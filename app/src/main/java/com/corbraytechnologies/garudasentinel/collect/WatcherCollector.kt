@@ -11,7 +11,6 @@ import android.os.Build
 import android.provider.Settings
 import android.provider.Telephony
 import android.view.accessibility.AccessibilityManager
-import androidx.core.net.toUri
 import com.corbraytechnologies.garudasentinel.data.AppMetadataEntity
 import com.corbraytechnologies.garudasentinel.model.WatcherApp
 import com.corbraytechnologies.garudasentinel.model.WatcherSignals
@@ -131,10 +130,6 @@ class WatcherCollector(private val context: Context) {
             unavailable = unavailable,
         )
     }
-
-    /** Opens the system screen where the user can review an app, so removal stays in their hands. */
-    fun appSettingsIntent(packageName: String): Intent =
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri())
 
     private fun isOutsideAStore(installer: String?): Boolean = when (installer) {
         null -> true

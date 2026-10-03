@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * Every Material role is set from [Palette]. Components such as the navigation drawer, filter
- * chips, switches, checkboxes and radio buttons take their colours from these roles, so none of
+ * Every Material role is set from [Palette]. Components such as filter chips, switches,
+ * checkboxes, radio buttons and text fields take their colours from these roles, so none of
  * them falls back to Material's purple defaults.
  */
 val GarudaColorScheme: ColorScheme = darkColorScheme(
@@ -27,7 +27,7 @@ val GarudaColorScheme: ColorScheme = darkColorScheme(
     primaryContainer = Palette.AccentTint,
     onPrimaryContainer = Palette.Accent,
     inversePrimary = Palette.Accent,
-    // Selected drawer items and selected filter chips use the secondary container.
+    // Selected filter chips use the secondary container.
     secondary = Palette.Accent,
     onSecondary = Palette.OnAccent,
     secondaryContainer = Palette.AccentTint,
@@ -55,8 +55,7 @@ val GarudaColorScheme: ColorScheme = darkColorScheme(
     scrim = Palette.Background,
     surfaceBright = Palette.Hairline,
     surfaceDim = Palette.Background,
-    // The drawer uses surfaceContainerLow, dialogs surfaceContainerHigh, cards and the unchecked
-    // switch track surfaceContainerHighest.
+    // Dialogs use surfaceContainerHigh, cards and the unchecked switch track surfaceContainerHighest.
     surfaceContainerLowest = Palette.Background,
     surfaceContainerLow = Palette.Surface,
     surfaceContainer = Palette.Surface,

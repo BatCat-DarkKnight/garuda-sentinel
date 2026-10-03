@@ -24,7 +24,7 @@ The app never reads messages, contacts, call logs, browsing history or what you 
 - **No network access.** The app does not request the `INTERNET` permission, so Android blocks every network connection it could make. This includes code from its libraries.
 - **Stays on the phone.** Scan results are stored in the app's private storage (a Room database and DataStore settings).
 - **No backups.** `allowBackup` is off, and the data extraction rules exclude every data domain from cloud backup and device-to-device transfer.
-- **Exports only when you ask.** Data leaves the app only through an export you start. You choose the file location in the system Save dialog and which categories to include. The export is a plain JSON file and **is not encrypted**, and it can include photo GPS coordinates, so keep it somewhere safe.
+- **Exports only when you ask.** Data leaves the app only through an export you start. You choose the file location in the system Save dialog and which categories to include. The recommended format, selected by default, is a password-protected ZIP (AES-256). A plain JSON file is also offered and **is not encrypted**. Photo GPS coordinates are left out unless you tick "Photo locations". Either way, keep the file somewhere safe.
 - **Delete everything.** "Delete all scan data" clears the database and releases folder access. Uninstalling the app also removes everything it stored.
 - **No logging.** The app's own code makes no logging calls, so scan data is not written to the system log.
 
