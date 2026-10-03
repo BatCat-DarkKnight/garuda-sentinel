@@ -58,7 +58,16 @@ fun AboutScreen(onBack: () -> Unit) {
                 Text("- Exports happen only when you pick where to save them.", style = MaterialTheme.typography.bodySmall)
                 Text("- One tap deletes everything.", style = MaterialTheme.typography.bodySmall)
             }
-            Text("(c) 2026 Corbray Technologies", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                listOf(
+                    "Copyright (C) 2025-2026 Karl Corbray",
+                    "Published by Corbray Technologies",
+                    "Licensed under GPL-3.0",
+                    "Fonts: IBM Plex Sans, IBM Plex Mono and Newsreader, licensed under the SIL Open Font License 1.1",
+                ).forEach {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
