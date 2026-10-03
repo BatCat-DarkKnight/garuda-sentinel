@@ -50,10 +50,10 @@ The App reads information that is already on your phone, such as installed apps,
 The App does not have permission to use the internet. It does not send your data to Corbray Technologies or anyone else. Scan results are stored only in the App's private storage on this phone and are excluded from backups.
 
 3. Exports are your choice
-If you export your data, the App writes one file to a location you pick. That file is not encrypted. What you do with it is up to you.
+If you export your data, the App writes one file to a location you pick. You can protect that file with a password (an encrypted ZIP file) or save it as a plain file that is not encrypted. What you do with it is up to you.
 
 4. Deleting your data
-You can delete all scan results at any time from Scan History & Export. Uninstalling the App also deletes them.
+You can delete all scan results at any time from Controls. Uninstalling the App also deletes them.
 
 5. License
 Corbray Technologies grants you a personal, non-transferable, non-exclusive license to use the App. You may not resell the App.
