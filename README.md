@@ -62,6 +62,12 @@ app/src/main/java/com/corbraytechnologies/garudasentinel/
 
 ## License
 
+Copyright (C) 2025-2026 Karl Corbray
+
 Garuda Sentinel is free software, licensed under the GNU General Public License v3.0. See `LICENSE` for the full text.
+
+Published by Corbray Technologies.
+
+The name Garuda Sentinel and the Garuda logo are trademarks of Corbray Technologies and are not licensed under the GPL. Modified versions must use a different name and logo, and must not imply they come from Corbray Technologies.
 
 The bundled fonts (IBM Plex Sans, IBM Plex Mono and Newsreader) are licensed under the SIL Open Font License 1.1. Their license texts are in `app/src/main/assets/licenses/`.
