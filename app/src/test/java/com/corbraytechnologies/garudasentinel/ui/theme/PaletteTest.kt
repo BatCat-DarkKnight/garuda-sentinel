@@ -2,6 +2,7 @@ package com.corbraytechnologies.garudasentinel.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.max
@@ -11,6 +12,7 @@ class PaletteTest {
 
     private val tokens = setOf(
         Palette.Background, Palette.Surface, Palette.Hairline,
+        Palette.OutlineStrong, Palette.DangerOutline,
         Palette.Text, Palette.TextMuted, Palette.TextDim,
         Palette.Accent, Palette.OnAccent,
         Palette.SeverityHigh, Palette.SeverityMedium, Palette.SeverityLow, Palette.Ok,
@@ -43,6 +45,12 @@ class PaletteTest {
         )
         val strays = roles.filterValues { it !in tokens }
         assertTrue("Roles not taken from the palette: ${strays.keys}", strays.isEmpty())
+    }
+
+    @Test
+    fun outlineTokensMatchTheSpec() {
+        assertEquals(Color(0xFF2A3648), Palette.OutlineStrong)
+        assertEquals(Color(0xFF5E3038), Palette.DangerOutline)
     }
 
     /** WCAG 2.x AA: 4.5:1 for body text, 3:1 for text at 24sp or larger. */

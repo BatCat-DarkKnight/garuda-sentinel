@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -96,6 +98,7 @@ fun ListRow(
     supporting: String? = null,
     value: String? = null,
     showChevron: Boolean = false,
+    titleColor: Color = Palette.Text,
     onClick: (() -> Unit)? = null,
 ) {
     Row(
@@ -107,7 +110,7 @@ fun ListRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = Palette.Text)
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = titleColor)
             supporting?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = Palette.TextDim)
             }
@@ -137,6 +140,9 @@ enum class Severity(val label: String) {
     MEDIUM("Medium"),
     LOW("Low"),
     OK("OK"),
+
+    /** A check that could not run. Neutral, so it reads as missing information rather than a problem. */
+    NOT_CHECKED("Not checked"),
     ;
 
     val color get() = when (this) {
@@ -144,12 +150,46 @@ enum class Severity(val label: String) {
         MEDIUM -> Palette.SeverityMedium
         LOW -> Palette.SeverityLow
         OK -> Palette.Ok
+        NOT_CHECKED -> Palette.TextMuted
+    }
+}
+
+/** Width of the bar on the left edge of high findings and the safety note. */
+private val BarWidth = 3.dp
+
+/**
+ * A full-width block with a 3dp [barColor] bar on its left edge, or no bar when it is null.
+ * The content keeps the same left edge either way, so text stays aligned down the screen.
+ */
+@Composable
+fun BarredBlock(
+    barColor: Color?,
+    modifier: Modifier = Modifier,
+    top: Dp = 16.dp,
+    bottom: Dp = 16.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Row(modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+        if (barColor != null) {
+            Box(Modifier.width(BarWidth).fillMaxHeight().background(barColor))
+        }
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(
+                    start = if (barColor != null) ScreenGutter - BarWidth else ScreenGutter,
+                    end = ScreenGutter,
+                    top = top,
+                    bottom = bottom,
+                ),
+            content = content,
+        )
     }
 }
 
 /**
  * One finding: severity, headline, body and an optional action. High findings carry a 3dp
- * accent bar on the left; the text stays aligned with the rest of the screen either way.
+ * bar on the left; the text stays aligned with the rest of the screen either way.
  */
 @Composable
 fun FindingRow(
@@ -160,41 +200,34 @@ fun FindingRow(
     actionLabel: String? = null,
     onAction: () -> Unit = {},
 ) {
-    val barWidth = 3.dp
-    Row(modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-        if (severity == Severity.HIGH) {
-            Box(Modifier.width(barWidth).fillMaxHeight().background(Palette.SeverityHigh))
-        }
-        Column(
-            Modifier
-                .weight(1f)
-                .padding(
-                    start = if (severity == Severity.HIGH) ScreenGutter - barWidth else ScreenGutter,
-                    end = ScreenGutter,
-                    top = 16.dp,
-                    bottom = if (actionLabel != null) 4.dp else 16.dp,
-                ),
-        ) {
-            Text(
-                severity.label.toUpperCase(LocaleList.current),
-                style = GarudaType.SectionLabel,
-                color = severity.color,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(headline, style = MaterialTheme.typography.titleMedium, color = Palette.Text)
-            Spacer(Modifier.height(4.dp))
-            Text(body, style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
-            if (actionLabel != null) {
-                Box(
-                    Modifier
-                        .heightIn(min = 48.dp)
-                        .clickable(role = Role.Button, onClick = onAction),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Text(actionLabel, style = MaterialTheme.typography.labelLarge, color = Palette.Accent)
-                }
-            }
-        }
+    BarredBlock(
+        barColor = if (severity == Severity.HIGH) Palette.SeverityHigh else null,
+        modifier = modifier,
+        bottom = if (actionLabel != null) 4.dp else 16.dp,
+    ) {
+        Text(
+            severity.label.toUpperCase(LocaleList.current),
+            style = GarudaType.SectionLabel,
+            color = severity.color,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(headline, style = MaterialTheme.typography.titleLarge, color = Palette.Text)
+        Spacer(Modifier.height(6.dp))
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
+        if (actionLabel != null) TextAction(actionLabel, onAction)
+    }
+}
+
+/** A gold text button with a 48dp touch target. */
+@Composable
+fun TextAction(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = Palette.Accent) {
+    Box(
+        modifier
+            .heightIn(min = 48.dp)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelLarge, color = color)
     }
 }
 
@@ -220,7 +253,7 @@ fun StatGroup(stats: List<Stat>, modifier: Modifier = Modifier) {
 
 private val ButtonHeight = 50.dp
 
-/** The main action on a screen: gold, 50dp high, full width unless [fullWidth] is false. */
+/** The main action on a screen: gold, 50dp high, full width unless [fullWidth] is false. [leading] sits before the text. */
 @Composable
 fun PrimaryButton(
     text: String,
@@ -228,6 +261,7 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fullWidth: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     Button(
         onClick = onClick,
@@ -240,10 +274,16 @@ fun PrimaryButton(
             disabledContentColor = Palette.TextMuted,
         ),
         modifier = modifier.height(ButtonHeight).then(if (fullWidth) Modifier.fillMaxWidth() else Modifier),
-    ) { Text(text, style = MaterialTheme.typography.labelLarge) }
+    ) {
+        if (leading != null) {
+            leading()
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(text, style = MaterialTheme.typography.labelLarge)
+    }
 }
 
-/** A secondary action: outlined with a hairline border, 50dp high, full width unless [fullWidth] is false. */
+/** A secondary action: transparent with a 1dp strong outline, 50dp high, full width unless [fullWidth] is false. */
 @Composable
 fun SecondaryButton(
     text: String,
@@ -256,9 +296,31 @@ fun SecondaryButton(
         onClick = onClick,
         enabled = enabled,
         shape = SmallCorner,
-        border = BorderStroke(1.dp, Palette.Hairline),
+        border = BorderStroke(1.dp, Palette.OutlineStrong),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = Palette.Text,
+            disabledContentColor = Palette.TextMuted,
+        ),
+        modifier = modifier.height(ButtonHeight).then(if (fullWidth) Modifier.fillMaxWidth() else Modifier),
+    ) { Text(text, style = MaterialTheme.typography.labelLarge) }
+}
+
+/** An action that deletes something: transparent, red text and a dark red outline. */
+@Composable
+fun DestructiveButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    fullWidth: Boolean = true,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        shape = SmallCorner,
+        border = BorderStroke(1.dp, Palette.DangerOutline),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = Palette.SeverityHigh,
             disabledContentColor = Palette.TextMuted,
         ),
         modifier = modifier.height(ButtonHeight).then(if (fullWidth) Modifier.fillMaxWidth() else Modifier),

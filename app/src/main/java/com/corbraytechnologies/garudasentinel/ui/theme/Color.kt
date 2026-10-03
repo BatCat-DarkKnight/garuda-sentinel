@@ -12,6 +12,12 @@ object Palette {
     val Surface = Color(0xFF10161F)
     val Hairline = Color(0xFF1D2735)
 
+    /** 1dp outline of secondary buttons and text fields. */
+    val OutlineStrong = Color(0xFF2A3648)
+
+    /** 1dp outline of destructive buttons. */
+    val DangerOutline = Color(0xFF5E3038)
+
     val Text = Color(0xFFE9EEF3)
     val TextMuted = Color(0xFF8D99A8)
     val TextDim = Color(0xFFA9B4C2)

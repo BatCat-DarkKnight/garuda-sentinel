@@ -21,6 +21,11 @@ import com.corbraytechnologies.garudasentinel.data.MediaMetadataEntity
 import com.corbraytechnologies.garudasentinel.data.ScanLogEntity
 import com.corbraytechnologies.garudasentinel.data.StorageMode
 import com.corbraytechnologies.garudasentinel.export.ExportCategory
+import com.corbraytechnologies.garudasentinel.findings.FindingRules
+import com.corbraytechnologies.garudasentinel.findings.Report
+import com.corbraytechnologies.garudasentinel.findings.ReportInput
+import com.corbraytechnologies.garudasentinel.permissions.MediaAccess
+import com.corbraytechnologies.garudasentinel.permissions.Permissions
 import com.corbraytechnologies.garudasentinel.model.BatteryInfo
 import com.corbraytechnologies.garudasentinel.model.DeviceInfo
 import com.corbraytechnologies.garudasentinel.model.InputDetails
@@ -38,6 +43,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -74,6 +82,63 @@ class MainViewModel(private val c: AppContainer) : ViewModel() {
             if (parsed.size < 2) null else ScanDiff.compute(previous = parsed[1], current = parsed[0])
         }
         .stateIn(this, null)
+
+    /** True when this process keeps scan results in memory only, so there is no earlier scan to compare with. */
+    val memoryOnly: Boolean = c.memoryOnly
+
+    /** Whether any scan result exists; null until the database has answered, so nothing flickers on start. */
+    val hasScanned: StateFlow<Boolean?> = combine(
+        c.db.scanLogDao().observeAll(),
+        c.db.appDao().observeAll(),
+    ) { logs, apps -> logs.isNotEmpty() || apps.isNotEmpty() }
+        .stateIn(this, null)
+
+    private val _signals = MutableStateFlow<WatcherSignals?>(null)
+
+    /** Who can watch this phone, read from the apps of the last scan. Null before the first scan. */
+    val signals: StateFlow<WatcherSignals?> = _signals.asStateFlow()
+
+    /** Which photo checks can run, re-read whenever the Report comes back into view. */
+    private val photoAccess = MutableStateFlow(readPhotoAccess())
+
+    /** The ranked findings on the Report screen; null until there is a scan and its watcher signals. */
+    val report: StateFlow<Report?> = combine(
+        c.db.appDao().observeAll(),
+        c.db.mediaDao().observeAll(),
+        _signals,
+        photoAccess,
+    ) { apps, media, signals, access ->
+        if (signals == null || apps.isEmpty()) {
+            null
+        } else {
+            FindingRules.build(ReportInput(apps, c.context.packageName, media, signals, access.photos, access.locations))
+        }
+    }
+        .flowOn(Dispatchers.Default)
+        .stateIn(this, null)
+
+    init {
+        // Watcher signals follow the app list, so a finished scan updates them.
+        viewModelScope.launch {
+            c.db.appDao().observeAll().collectLatest { apps -> _signals.value = readSignals(apps) }
+        }
+    }
+
+    /** Re-reads settings and permissions that can change while the app is in the background. */
+    fun refreshChecks() = viewModelScope.launch {
+        photoAccess.value = readPhotoAccess()
+        _signals.value = readSignals(withContext(Dispatchers.IO) { c.db.appDao().getAll() })
+    }
+
+    private suspend fun readSignals(apps: List<AppMetadataEntity>): WatcherSignals? =
+        if (apps.isEmpty()) null else c.watcherCollector.collect(apps)
+
+    private fun readPhotoAccess() = PhotoAccess(
+        photos = Permissions.mediaAccess(c.context) != MediaAccess.NONE,
+        locations = Permissions.hasMediaLocation(c.context),
+    )
+
+    private data class PhotoAccess(val photos: Boolean, val locations: Boolean)
 
     fun acceptEula() = viewModelScope.launch { c.settings.setEulaAccepted(true) }
     fun startScan() = c.scanCoordinator.start()

@@ -48,7 +48,7 @@ import com.corbraytechnologies.garudasentinel.ui.screens.FaqScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.FilesScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.HelpScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.HistoryScreen
-import com.corbraytechnologies.garudasentinel.ui.screens.HomeScreen
+import com.corbraytechnologies.garudasentinel.ui.screens.ReportScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.MediaScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.PermissionsScreen
 import com.corbraytechnologies.garudasentinel.ui.screens.UsageScreen
@@ -131,7 +131,7 @@ private fun MainTabs(main: MainViewModel) {
             startDestination = Tab.REPORT.route,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
-            composable(Tab.REPORT.route) { HomeScreen(main, onNavigate = go) }
+            composable(Tab.REPORT.route) { ReportScreen(main, onNavigate = go, onRoute = goRoute) }
             composable(Tab.EXPLORE.route) { ExploreScreen(main, onNavigate = go) }
             composable(Tab.CONTROLS.route) { HistoryScreen(onBack = null) }
             composable(Tab.HELP.route) { HelpScreen(onNavigate = go) }

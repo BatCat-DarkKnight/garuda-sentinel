@@ -81,6 +81,26 @@ object GarudaType {
     /** Title at the top of a tab or screen. */
     val ScreenTitle = newsreader(34, 37)
 
+    /** The Report headline, such as "3 things worth a look". */
+    val ReportHeadline = newsreader(42, 45)
+
+    /** "GARUDA SENTINEL" above the Report. Set the text in capitals. */
+    val Eyebrow = TextStyle(
+        fontFamily = PlexMonoFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.18.em,
+    )
+
+    /** The tally line under the Report headline. */
+    val Tally = TextStyle(
+        fontFamily = PlexMonoFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 20.sp,
+    )
+
     /** Small caps section label. Set the text in capitals; the style does not change case. */
     val SectionLabel = TextStyle(
         fontFamily = PlexMonoFontFamily,
