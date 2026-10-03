@@ -1,6 +1,6 @@
 package com.corbraytechnologies.garudasentinel.ui.screens
 
-import androidx.compose.foundation.clickable
+import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,146 +8,234 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.corbraytechnologies.garudasentinel.findings.FindingRules
+import com.corbraytechnologies.garudasentinel.findings.WatcherRows
 import com.corbraytechnologies.garudasentinel.model.WatcherFinding
+import com.corbraytechnologies.garudasentinel.model.WatcherKind
 import com.corbraytechnologies.garudasentinel.model.WatcherLevel
 import com.corbraytechnologies.garudasentinel.ui.Dest
 import com.corbraytechnologies.garudasentinel.ui.MainViewModel
-import com.corbraytechnologies.garudasentinel.ui.WatchersViewModel
-import com.corbraytechnologies.garudasentinel.ui.components.ConfirmOpenLink
-import com.corbraytechnologies.garudasentinel.ui.components.EmptyStateMessage
+import com.corbraytechnologies.garudasentinel.ui.appRoute
+import com.corbraytechnologies.garudasentinel.ui.components.BarredBlock
 import com.corbraytechnologies.garudasentinel.ui.components.GarudaScaffold
-import com.corbraytechnologies.garudasentinel.ui.components.SectionCard
+import com.corbraytechnologies.garudasentinel.ui.components.HairlineDivider
+import com.corbraytechnologies.garudasentinel.ui.components.ListRow
+import com.corbraytechnologies.garudasentinel.ui.components.PrimaryButton
+import com.corbraytechnologies.garudasentinel.ui.components.ScreenGutter
+import com.corbraytechnologies.garudasentinel.ui.components.ScreenTitle
+import com.corbraytechnologies.garudasentinel.ui.components.SecondaryButton
+import com.corbraytechnologies.garudasentinel.ui.components.SectionLabel
+import com.corbraytechnologies.garudasentinel.ui.components.TextAction
+import com.corbraytechnologies.garudasentinel.ui.components.appInfoIntent
+import com.corbraytechnologies.garudasentinel.ui.components.intent
 import com.corbraytechnologies.garudasentinel.ui.components.openSettings
-import com.corbraytechnologies.garudasentinel.ui.containerViewModel
+import com.corbraytechnologies.garudasentinel.ui.theme.GarudaType
+import com.corbraytechnologies.garudasentinel.ui.theme.Palette
 import com.corbraytechnologies.garudasentinel.utils.WatcherRules
-import com.corbraytechnologies.garudasentinel.utils.countOf
+import kotlinx.coroutines.launch
 
-private const val SAFETY_URL = "https://stopstalkerware.org"
+/** Shown as text with a copy button, never as a link: opening a browser leaves history on the phone. */
+private const val SAFETY_ADDRESS = "stopstalkerware.org"
 
 /**
  * Shows which apps and settings on this phone can watch the user. Everything here is read only;
- * removing anything is left to the system screens.
+ * every button opens an Android screen where the user decides.
  */
 @Composable
-fun WatchersScreen(main: MainViewModel, onBack: () -> Unit, onNavigate: (Dest) -> Unit) {
-    val vm = containerViewModel { WatchersViewModel(it) }
+fun WatchersScreen(main: MainViewModel, onBack: () -> Unit, onRoute: (String) -> Unit) {
     val apps by main.apps.collectAsStateWithLifecycle()
-    val signals by vm.signals.collectAsStateWithLifecycle()
-    val busy by vm.busy.collectAsStateWithLifecycle()
-    var linkToOpen by rememberSaveable { mutableStateOf<String?>(null) }
+    val signals by main.signals.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(apps.size) {
-        if (apps.isNotEmpty()) vm.refresh()
+    LifecycleResumeEffect(Unit) {
+        main.refreshChecks()
+        onPauseOrDispose { }
     }
 
-    GarudaScaffold(
-        title = "Who can watch",
-        onBack = onBack,
-        actions = {
-            IconButton(onClick = { vm.refresh() }, enabled = !busy && apps.isNotEmpty()) {
-                Icon(Icons.Default.Visibility, contentDescription = "Check again")
-            }
-        },
-    ) { padding ->
-        val current = signals
-        if (apps.isEmpty()) {
-            EmptyStateMessage(Icons.Default.Visibility, "Run a check from Report first, then this screen can check your apps.", Modifier.padding(padding))
-            return@GarudaScaffold
-        }
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            item {
-                SectionCard(
-                    title = "Before you change anything",
-                    subtitle = "If you think someone else may have set up monitoring on your phone, removing it can warn them " +
-                        "that you know. If you are worried about your safety, talk to a domestic violence or tech safety " +
-                        "advocate first, ideally from a device the other person cannot see.",
-                ) {
-                    TextButton(onClick = { linkToOpen = SAFETY_URL }) { Text("Open stopstalkerware.org") }
-                }
-            }
-            if (current == null) {
-                item { Text("Checking...", style = MaterialTheme.typography.bodyMedium) }
-            } else {
-                val groups = WatcherRules.grouped(current)
-                item {
-                    val attention = WatcherRules.attentionCount(current)
-                    SectionCard(
-                        title = if (attention == 0) "Nothing needs your attention" else "${countOf(attention, "thing")} to look at",
-                        subtitle = "Read from this phone with ordinary app permissions. Garuda Sentinel only reads these " +
-                            "settings; it never changes them.",
-                    ) {}
-                }
-                groups.forEach { (level, findings) ->
-                    item { Text(levelTitle(level), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                    items(findings.size) { index ->
-                        FindingCard(findings[index]) { packageName ->
-                            context.openSettings(vm.appSettingsIntent(packageName))
+    fun openSetting(finding: WatcherFinding) {
+        val single = finding.apps.singleOrNull()
+        val target = FindingRules.settingsTarget(finding.kind) ?: return
+        val appBased = finding.kind == WatcherKind.HIDDEN_APPS || finding.kind == WatcherKind.SIDELOADED
+        context.openSettings(if (appBased && single != null) appInfoIntent(single.packageName) else target.intent())
+    }
+
+    GarudaScaffold(title = "", onBack = onBack) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
+            ScreenTitle("Who can watch this phone")
+            Text(
+                "These are the settings that let software see what you do. Garuda Sentinel only reads them. " +
+                    "It never changes anything.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Palette.TextDim,
+                modifier = Modifier.padding(horizontal = ScreenGutter),
+            )
+            Spacer(Modifier.height(20.dp))
+            SafetyNote()
+
+            val current = signals
+            when {
+                apps.isEmpty() -> Note("Run a check from Report first, then this screen can check your apps.")
+                current == null -> Note("Reading settings...")
+                else -> {
+                    val groups = WatcherRules.grouped(current)
+                    groups[WatcherLevel.ATTENTION]?.let { findings ->
+                        SectionLabel("Needs attention", color = Palette.SeverityHigh)
+                        HairlineDivider()
+                        findings.forEach { finding ->
+                            AttentionRow(finding, onReview = { onRoute(appRoute(it)) }, onOpenSetting = { openSetting(finding) })
+                            HairlineDivider()
+                        }
+                    }
+                    groups[WatcherLevel.CHECK]?.let { findings ->
+                        SectionLabel("Worth knowing", color = Palette.SeverityMedium)
+                        HairlineDivider()
+                        findings.forEach { finding ->
+                            ListRow(
+                                finding.title,
+                                supporting = WatcherRows.checkLine(finding),
+                                showChevron = true,
+                                onClick = { openSetting(finding) },
+                            )
+                            HairlineDivider()
+                        }
+                    }
+                    groups[WatcherLevel.FINE]?.let { findings ->
+                        SectionLabel("All clear", color = Palette.Ok)
+                        HairlineDivider()
+                        findings.forEach { finding ->
+                            AllClearRow(finding)
+                            HairlineDivider()
                         }
                     }
                 }
-                item {
-                    OutlinedButton(onClick = { onNavigate(Dest.APPS) }, modifier = Modifier.fillMaxWidth()) {
-                        Text("See all apps and their permissions")
+            }
+
+            Text(
+                "Some things cannot be checked from inside an app: other apps' usage access, screen overlays, " +
+                    "all-files access, and which app is running a VPN.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Palette.TextMuted,
+                modifier = Modifier.padding(start = ScreenGutter, end = ScreenGutter, top = 24.dp, bottom = 32.dp),
+            )
+        }
+    }
+}
+
+/** Advice for people who may be monitored by someone close to them, shown before any finding. */
+@Composable
+private fun SafetyNote() {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    var copied by remember { mutableStateOf(false) }
+    BarredBlock(barColor = Palette.Ok, top = 4.dp, bottom = 4.dp) {
+        Text(
+            "Worried someone else set up your phone?",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = Palette.Text,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Removing monitoring software can alert the person who installed it. Talk to a tech safety advocate " +
+                "before you change anything.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Palette.TextDim,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            SelectionContainer {
+                Text(SAFETY_ADDRESS, style = GarudaType.NumberMedium, color = Palette.Text)
+            }
+            TextAction(
+                if (copied) "Copied" else "Copy address",
+                onClick = {
+                    scope.launch {
+                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Address", SAFETY_ADDRESS)))
+                        copied = true
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
+                },
+            )
+        }
+    }
+}
+
+/** A "needs attention" item: bar, title, the apps involved, what it means, and where to review it. */
+@Composable
+private fun AttentionRow(finding: WatcherFinding, onReview: (String) -> Unit, onOpenSetting: () -> Unit) {
+    // Certificates are listed like apps, but there is no app to review.
+    val reviewable = if (finding.kind == WatcherKind.CERTIFICATES) emptyList() else finding.apps
+    BarredBlock(barColor = Palette.SeverityHigh, top = 20.dp, bottom = 20.dp) {
+        Text(finding.title, style = MaterialTheme.typography.titleLarge, color = Palette.Text)
+        WatcherRows.countLine(finding)?.let {
+            Spacer(Modifier.height(6.dp))
+            Text(it, style = GarudaType.NumberSmall, color = Palette.TextMuted)
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(finding.explanation, style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
+        Spacer(Modifier.height(12.dp))
+        when (reviewable.size) {
+            0 -> PrimaryButton("Open Android setting", onClick = onOpenSetting)
+            1 -> {
+                PrimaryButton("Review app", onClick = { onReview(reviewable.single().packageName) })
+                Spacer(Modifier.height(10.dp))
+                SecondaryButton("Open Android setting", onClick = onOpenSetting)
+            }
+            else -> {
+                reviewable.forEach { app -> TextAction("Review ${app.appName}", onClick = { onReview(app.packageName) }) }
+                Spacer(Modifier.height(6.dp))
+                SecondaryButton("Open Android setting", onClick = onOpenSetting)
             }
         }
     }
-
-    ConfirmOpenLink(url = linkToOpen, onDismiss = { linkToOpen = null })
 }
 
-private fun levelTitle(level: WatcherLevel): String = when (level) {
-    WatcherLevel.ATTENTION -> "Needs attention"
-    WatcherLevel.CHECK -> "Worth knowing"
-    WatcherLevel.FINE -> "All clear"
+/** A compact "all clear" row: name on the left, status on the right. */
+@Composable
+private fun AllClearRow(finding: WatcherFinding) {
+    val row = WatcherRows.allClear(finding)
+    Column(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = ScreenGutter, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(row.name, style = MaterialTheme.typography.bodyLarge, color = Palette.Text, modifier = Modifier.weight(1f))
+            Text(
+                row.status,
+                style = GarudaType.NumberMedium,
+                color = if (row.isOn) Palette.Ok else Palette.TextMuted,
+                modifier = Modifier.padding(start = 16.dp),
+            )
+        }
+        if (finding.kind == WatcherKind.NOT_CHECKED) {
+            Text(finding.explanation, style = MaterialTheme.typography.bodySmall, color = Palette.TextDim)
+        }
+    }
 }
 
 @Composable
-private fun FindingCard(finding: WatcherFinding, onOpenApp: (String) -> Unit) {
-    SectionCard(title = finding.title, subtitle = finding.explanation) {
-        finding.apps.forEach { app ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { onOpenApp(app.packageName) },
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(app.appName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                    Text(
-                        listOfNotNull(app.detail, app.packageName.takeIf { it != app.appName }).joinToString("  |  "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Text("Open", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-    }
+private fun Note(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = Palette.TextMuted,
+        modifier = Modifier.padding(horizontal = ScreenGutter, vertical = 24.dp),
+    )
 }

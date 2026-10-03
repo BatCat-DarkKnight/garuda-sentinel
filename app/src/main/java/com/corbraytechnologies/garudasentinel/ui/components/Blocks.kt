@@ -65,11 +65,11 @@ fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
 
 /** Monospace caps label that opens a section, with the standard space above and below. */
 @Composable
-fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = Palette.TextMuted) {
     Text(
         text.toUpperCase(LocaleList.current),
         style = GarudaType.SectionLabel,
-        color = Palette.TextMuted,
+        color = color,
         modifier = modifier
             .fillMaxWidth()
             .padding(start = ScreenGutter, end = ScreenGutter, top = 32.dp, bottom = 12.dp)

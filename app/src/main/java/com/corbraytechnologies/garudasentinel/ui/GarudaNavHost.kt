@@ -164,7 +164,7 @@ private fun MainTabs(main: MainViewModel) {
             composable(Dest.USAGE.route) { UsageScreen(main, onBack = back, onNavigate = go) }
             composable(Dest.FILES.route) { FilesScreen(main, onBack = back) }
             composable(Dest.DEVICE.route) { DeviceScreen(onBack = back, onNavigate = go) }
-            composable(Dest.WATCHERS.route) { WatchersScreen(main, onBack = back, onNavigate = go) }
+            composable(Dest.WATCHERS.route) { WatchersScreen(main, onBack = back, onRoute = goRoute) }
             composable(Dest.HISTORY.route) { HistoryScreen(onBack = back) }
             composable(Dest.PERMISSIONS.route) { PermissionsScreen(onBack = back) }
             composable(Dest.FAQ.route) { FaqScreen(onBack = back) }
