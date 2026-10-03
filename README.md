@@ -4,6 +4,15 @@ A personal Android privacy tool by Corbray Technologies. It shows you the metada
 
 The app opens on a Report: a ranked list of what is worth a look, each with a plain sentence and one action that opens the right Android settings screen. The raw data sits under Explore, export and deletion under Controls, and permissions, FAQ and About under Help. The app only reads; it never changes another app or a setting.
 
+<p align="center">
+  <img src="docs/images/report.png" width="200" alt="Report: a ranked list of what is worth a look, with a tally and a Check again button">
+  <img src="docs/images/who-can-watch.png" width="200" alt="Who can watch this phone: a safety note, then apps with notification access and their settings">
+  <img src="docs/images/controls.png" width="200" alt="Controls: export sections with photo locations off by default and the password-protected ZIP selected">
+  <img src="docs/images/explore.png" width="200" alt="Explore: Your data, with Apps, Photos and media, Screen time, Files, and Device and network">
+</p>
+
+<p align="center"><sub>Report, Who can watch, Controls and Explore. Sample data on an emulator; the apps shown are made up.</sub></p>
+
 **Nothing leaves the phone.** The app does not request the `INTERNET` permission, so Android blocks every network connection. Results live in private app storage, are excluded from backup and device transfer, and can be exported only to a file the user picks. Distribution is by sideloaded APK only.
 
 ## Build
