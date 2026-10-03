@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,6 +36,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.corbraytechnologies.garudasentinel.ui.components.HairlineDivider
@@ -115,10 +117,15 @@ fun GarudaNavHost() {
 @Composable
 private fun MainTabs(main: MainViewModel) {
     val nav = rememberNavController()
-    val backStack by nav.currentBackStack.collectAsStateWithLifecycle()
-    // The selected tab is the last tab root on the back stack; screens opened from Report sit
-    // directly on it, so the fallback is Report.
-    val selected = backStack.asReversed().firstNotNullOfOrNull { Tab.ofRoute(it.destination.route) } ?: Tab.REPORT
+    val current by nav.currentBackStackEntryAsState()
+    // The back stack holds Report and at most one other tab root (selectTab pops back to Report),
+    // so the selected tab is that other root when it is on the stack, and Report otherwise.
+    // Read again whenever the current screen changes.
+    val selected = remember(current) {
+        Tab.entries.firstOrNull { tab ->
+            tab != Tab.REPORT && runCatching { nav.getBackStackEntry(tab.route) }.isSuccess
+        } ?: Tab.REPORT
+    }
     val go: (Dest) -> Unit = { nav.navigate(it.route) }
     val goRoute: (String) -> Unit = { nav.navigate(it) }
     val back: () -> Unit = { nav.popBackStack() }
